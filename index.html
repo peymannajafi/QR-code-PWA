@@ -45,12 +45,7 @@
         <main class="p-4 md:p-6">
             <!-- Configuration Error Message -->
             <div id="config-error" class="hidden text-center p-6 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-                <h2 class="text-2xl font-bold mb-4">Configuration Required</h2>
-                <p>Your Firebase configuration is missing or invalid.</p>
-                <p class="mt-2">Please create a Firebase project, get your web app configuration, and paste it into the `firebaseConfig` object in this HTML file.</p>
-                <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" class="inline-block mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">
-                    Go to Firebase Console
-                </a>
+                <!-- Error content will be injected here by JavaScript -->
             </div>
 
             <!-- Loading Indicator -->
@@ -139,19 +134,18 @@
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, onSnapshot, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-analytics.js";
-
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+        import { getFirestore, collection, doc, onSnapshot, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+        
         // --- 1. PASTE YOUR FIREBASE CONFIGURATION HERE ---
         const firebaseConfig = {
-          apiKey: "AIzaSyDWI6YPl0-GNCzduIG7UTnv31GWDt1Ytvk",
-          authDomain: "soheil-9cf34.firebaseapp.com",
-          projectId: "soheil-9cf34",
-          storageBucket: "soheil-9cf34.firebasestorage.app",
-          messagingSenderId: "734595867666",
-          appId: "1:734595867666:web:7958dfb77cdac1992ea4cb",
-          measurementId: "G-QFYY5XYMFL"
+          apiKey: "AIzaSyCJ3pxpHyIp8DxSLcK9xdyQfxskFqJQq_Y",
+          authDomain: "qr-code-soheil-online.firebaseapp.com",
+          projectId: "qr-code-soheil-online",
+          storageBucket: "qr-code-soheil-online.firebasestorage.app",
+          messagingSenderId: "874584054880",
+          appId: "1:874584054880:web:b558d97d56ae13e07d7705",
+          measurementId: "G-LCD56T8MED"
         };
         // ----------------------------------------------------
 
@@ -164,6 +158,14 @@
             if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "YOUR_API_KEY") {
                 loadingIndicator.style.display = 'none';
                 configErrorContainer.style.display = 'block';
+                configErrorContainer.innerHTML = `
+                    <h2 class="text-2xl font-bold mb-4">Configuration Required</h2>
+                    <p>Your Firebase configuration is missing.</p>
+                    <p class="mt-2">Please create a Firebase project, get your web app configuration, and paste it into the <code>firebaseConfig</code> object in this HTML file.</p>
+                    <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" class="inline-block mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">
+                        Go to Firebase Console
+                    </a>
+                `;
                 return false;
             }
             return true;
@@ -356,8 +358,46 @@
                 }
             });
             signInAnonymously(auth).catch(error => {
-                console.error("Anonymous sign-in failed:", error);
-                ui.showToast("Could not connect to the database.", true);
+                console.error("Firebase Connection Error:", error);
+                const configErrorContainer = document.getElementById('config-error');
+                const loadingIndicator = document.getElementById('loading-indicator');
+                const pagesContainer = document.getElementById('pages-container');
+
+                // Hide main content and show a specific error message
+                loadingIndicator.style.display = 'none';
+                pagesContainer.style.display = 'none';
+                configErrorContainer.style.display = 'block';
+
+                let baseErrorMessage = `
+                    <p class="mt-4 font-semibold">Also, please double-check that:</p>
+                    <ul class="list-disc list-inside mt-2 text-left max-w-md mx-auto">
+                        <li>The <code>firebaseConfig</code> values in the HTML are an exact match for your project's config.</li>
+                        <li>The project ID (<code>${firebaseConfig.projectId || 'not found'}</code>) is correct.</li>
+                    </ul>
+                    <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" class="inline-block mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">
+                        Go to Firebase Console
+                    </a>
+                `;
+
+                if (error.code === 'auth/configuration-not-found') {
+                    configErrorContainer.innerHTML = `
+                        <h2 class="text-2xl font-bold mb-4">Action Required</h2>
+                        <p class="font-bold text-lg">Error: Anonymous Sign-in is not enabled.</p>
+                        <p class="mt-2">This is the most common setup issue. To fix it:</p>
+                        <ol class="list-decimal list-inside mt-2 text-left max-w-md mx-auto space-y-1">
+                            <li>Go to your Firebase Console.</li>
+                            <li>In the "Build" menu, click <b>Authentication</b>.</li>
+                            <li>Click the <b>"Get started"</b> button.</li>
+                            <li>From the list of Sign-in providers, click on <b>Anonymous</b> and <b>enable</b> it.</li>
+                        </ol>
+                    ` + baseErrorMessage;
+                } else {
+                     configErrorContainer.innerHTML = `
+                        <h2 class="text-2xl font-bold mb-4">Connection Failed</h2>
+                        <p class="font-bold text-lg">Error: ${error.code}</p>
+                    ` + baseErrorMessage;
+                    ui.showToast(`Error: ${error.message}`, true);
+                }
             });
         }
     </script>
