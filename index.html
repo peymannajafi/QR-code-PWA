@@ -3,636 +3,296 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Building Information Hub</title>
+    <title>Building Information Model Hub</title>
     
-    <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#FFFFFF">
+    <link rel="apple-touch-icon" href="https://placehold.co/192x192/000000/ffffff?text=BIM">
 
-    <!-- Theme and Icons for PWA -->
-    <meta name="theme-color" content="#2c3e50">
-    <link rel="apple-touch-icon" href="https://placehold.co/192x192/2c3e50/ffffff?text=BIM">
-
-    <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
 
-    <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
-        /* Custom styles for a better look and feel */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap');
-
-        body {
-            font-family: 'Inter', sans-serif;
+        :root {
+            --bg-main: #F4F7FC;
+            --bg-panel: #FFFFFF;
+            --text-primary: #1A202C;
+            --text-secondary: #718096;
+            --accent-primary: #4A90E2; /* A professional blue */
+            --accent-secondary: #50E3C2; /* A vibrant mint for highlights */
+            --border-color: #E2E8F0;
+            --toast-success: #C6F6D5;
+            --toast-error: #FED7D7;
+            --text-success: #2F855A;
+            --text-error: #C53030;
         }
-        .persian {
-            font-family: 'Vazirmatn', sans-serif;
-            direction: rtl;
+        .dark {
+             --bg-main: #1A202C;
+             --bg-panel: #2D3748;
+             --text-primary: #F7FAFC;
+             --text-secondary: #A0AEC0;
+             --border-color: #4A5568;
         }
-        .btn { @apply text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300; }
-        .btn-primary { @apply bg-blue-600 hover:bg-blue-700; }
-        .btn-secondary { @apply bg-gray-600 hover:bg-gray-700; }
-        .btn-success { @apply bg-green-600 hover:bg-green-700; }
-        .btn-danger { @apply bg-red-600 hover:bg-red-700; }
-        
-        .modal-overlay { @apply fixed inset-0 bg-black bg-opacity-50 transition-opacity; }
-        .modal-container { @apply fixed inset-0 flex items-center justify-center p-4 z-50; }
-        .modal-content { @apply bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg max-h-full overflow-y-auto; }
 
-        /* Animation for modals */
-        .modal-container.hidden { display: none; }
+        body { font-family: 'Ubuntu', sans-serif; background-color: var(--bg-main); color: var(--text-primary); }
+        .persian { font-family: 'Vazirmatn', sans-serif; direction: rtl; }
         
-        .dropdown-menu { @apply absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg py-1 z-20; }
+        .panel-content { @apply hidden; }
+        .panel-content.active { @apply block; }
+        
+        .btn { @apply w-full text-center py-3 px-6 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2; }
+        .btn-primary { @apply bg-[var(--accent-primary)] text-white hover:opacity-90 focus:ring-[var(--accent-primary)]; }
+        .btn-secondary { @apply bg-[var(--border-color)] text-[var(--text-primary)] hover:bg-opacity-80 focus:ring-[var(--text-secondary)]; }
+        .btn:disabled { @apply bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed; }
+
+        .input-field { @apply w-full border border-[var(--border-color)] rounded-lg py-2 px-4 bg-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]; }
+        .tab { @apply py-2 px-4 font-medium text-[var(--text-secondary)] border-b-2 border-transparent cursor-pointer; }
+        .tab.active { @apply text-[var(--accent-primary)] border-[var(--accent-primary)]; }
+        
+        .skeleton { @apply bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse; }
+        .toast { @apply fixed bottom-5 right-5 p-4 rounded-xl shadow-lg transition-all duration-300 transform translate-y-[200%]; z-50; }
+        .toast.show { @apply translate-y-0; }
+        .toast.success { background-color: var(--toast-success); color: var(--text-success); }
+        .toast.error { background-color: var(--toast-error); color: var(--text-error); }
     </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+<body>
 
-    <div id="app-container" class="max-w-7xl mx-auto p-4 relative">
-
-        <!-- Header -->
-        <header class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold text-blue-600 dark:text-blue-400" data-lang="app_title">Building Info Hub</h1>
-            <div class="flex items-center space-x-2">
-                <button id="toggle-lang-btn" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">🇮🇷 / 🇬🇧</button>
-                <div class="relative">
-                    <button id="options-menu-btn" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path></svg>
-                    </button>
-                    <div id="options-menu" class="dropdown-menu hidden">
-                        <a href="#" id="scan-qr-btn" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600" data-lang="scan_qr_code">Scan QR Code</a>
-                        <a href="#" id="import-excel-btn" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600" data-lang="import_excel">Import Excel</a>
-                        <a href="#" id="export-excel-btn" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600" data-lang="export_excel">Export Excel</a>
-                    </div>
+    <div class="flex h-screen">
+        <!-- Sidebar / List Panel -->
+        <aside id="list-panel" class="bg-[var(--bg-panel)] w-full md:w-1/3 lg:w-1/4 h-screen flex-col border-r border-[var(--border-color)] hidden md:flex">
+            <header class="p-4 border-b border-[var(--border-color)]">
+                <input type="search" id="search-bar" class="input-field" data-lang-placeholder="search">
+            </header>
+            <div id="building-list-container" class="p-4 space-y-3 overflow-y-auto">
+                <!-- Skeleton Loader -->
+                <div id="skeleton-loader">
+                    <div class="h-16 skeleton"></div>
+                    <div class="h-16 mt-3 skeleton"></div>
+                    <div class="h-16 mt-3 skeleton"></div>
+                </div>
+                <!-- Building List -->
+                <div id="building-list"></div>
+                <!-- Empty State -->
+                <div id="empty-state" class="text-center p-8 hidden">
+                    <h3 class="font-bold text-lg" data-lang="no_buildings_title">No Buildings Yet</h3>
+                    <p class="text-sm text-[var(--text-secondary)]" data-lang="no_buildings_desc">Click "Add Building" to get started.</p>
                 </div>
             </div>
-        </header>
+            <footer class="p-4 mt-auto border-t border-[var(--border-color)] grid grid-cols-2 gap-3">
+                 <button class="btn btn-secondary !py-2" id="add-building-btn"><span data-lang="add_new_building">Add Building</span></button>
+                 <button class="btn btn-secondary !py-2" id="scan-qr-btn"><span data-lang="scan_qr_code">Scan QR</span></button>
+            </footer>
+        </aside>
 
-        <!-- Main Content -->
-        <main>
-            <div class="relative w-full md:w-1/2 mb-4">
-                <input type="search" id="search-bar" class="w-full p-2 pl-10 rounded-lg bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" data-lang-placeholder="search_by_zip">
-                <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <!-- Main Content Panel -->
+        <main id="main-panel" class="flex-1 h-screen overflow-y-auto p-8">
+            <!-- Home/Welcome Panel -->
+            <div id="panel-home" class="panel-content active">
+                 <h1 class="text-4xl font-bold" data-lang="home_title_1">Building Information Hub</h1>
+                 <p class="text-lg text-[var(--text-secondary)] mt-2" data-lang="home_subtitle">Select a building or add a new one.</p>
             </div>
-            <div id="building-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                <!-- Building cards will be injected here -->
-            </div>
-            <p id="empty-list-msg" class="text-center text-gray-500 mt-8" data-lang="no_buildings_found">No buildings found. Add one to get started!</p>
-        </main>
-        
-        <!-- Floating Action Button (FAB) -->
-        <button id="add-building-btn" title="Add New Building" class="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110 z-40">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-        </button>
-    </div>
-
-    <!-- Modals -->
-    <div id="modal-overlay" class="modal-overlay hidden" data-action="close-modal"></div>
-    
-    <!-- Form Modal -->
-    <div id="modal-form" class="modal-container hidden">
-        <div class="modal-content">
-            <div class="p-6">
-                <h2 id="form-title" class="text-2xl font-bold mb-4" data-lang="add_new_building">Add New Building</h2>
-                <form id="building-form" class="space-y-4">
+            
+            <!-- Form Panel -->
+            <div id="panel-form" class="panel-content">
+                <form id="building-form" class="max-w-2xl mx-auto">
                     <input type="hidden" id="building-id">
-                    <div>
-                        <label for="building-name" class="block mb-1 font-medium" data-lang="building_name">Building Name</label>
-                        <input type="text" id="building-name" class="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600" required>
+                    <h1 class="text-3xl font-bold mb-6" data-lang="building_info">Building Information</h1>
+                    <!-- Form Tabs -->
+                    <div class="border-b border-[var(--border-color)] mb-6">
+                        <nav class="-mb-px flex space-x-6 rtl:space-x-reverse">
+                            <button type="button" class="tab active" data-tab="1" data-lang="tab_address">Address & Info</button>
+                            <button type="button" class="tab" data-tab="2" data-lang="tab_property">Property Profile</button>
+                            <button type="button" class="tab" data-tab="3" data-lang="tab_notes">Photos & Notes</button>
+                        </nav>
                     </div>
-                    <div>
-                        <label for="address" class="block mb-1 font-medium" data-lang="address">Address</label>
-                        <input type="text" id="address" class="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600" required>
-                    </div>
-                    <div>
-                        <label for="zip-code" class="block mb-1 font-medium" data-lang="zip_code">Postal / Zip Code</label>
-                        <input type="text" id="zip-code" class="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600" required>
-                    </div>
-                    <div>
-                        <label for="notes" class="block mb-1 font-medium" data-lang="notes">Notes</label>
-                        <textarea id="notes" rows="4" class="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600"></textarea>
-                    </div>
-                    <div>
-                        <label for="photo" class="block mb-1 font-medium" data-lang="photo">Photo</label>
-                        <input type="file" id="photo" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-gray-600 file:text-blue-700 dark:file:text-blue-200 hover:file:bg-blue-100">
-                        <img id="photo-preview" class="mt-4 rounded-lg max-h-60 hidden" src="" alt="Photo preview">
-                    </div>
-                     <div>
-                        <label class="block mb-1 font-medium" data-lang="location">Location</label>
-                        <div class="flex items-center gap-4">
-                            <button type="button" id="get-location-btn" class="btn btn-secondary" data-lang="capture_location">Capture Location</button>
-                            <span id="location-display" class="text-sm text-gray-500"></span>
+                    <!-- Tab Content -->
+                    <div id="tab-content" class="space-y-4">
+                        <div class="tab-pane active" data-tab-pane="1">
+                            <div class="input-group"><label class="font-medium mb-1 block" for="name" data-lang="name">Name *</label><input type="text" id="name" class="input-field" required></div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                <div class="input-group"><label class="font-medium mb-1 block" for="zipCode" data-lang="zip_code">ZIP/Postal Code</label><input type="text" id="zipCode" class="input-field"></div>
+                                <div class="input-group"><label class="font-medium mb-1 block" for="address" data-lang="address">Address</label><input type="text" id="address" class="input-field"></div>
+                            </div>
+                        </div>
+                        <div class="tab-pane hidden" data-tab-pane="2">
+                             <div class="input-group"><label class="font-medium mb-1 block" for="area" data-lang="area">Area (sqm)</label><input type="number" id="area" class="input-field"></div>
+                        </div>
+                         <div class="tab-pane hidden" data-tab-pane="3">
+                             <div class="input-group"><label class="font-medium mb-1 block" for="notes" data-lang="notes">Notes</label><textarea id="notes" class="input-field"></textarea></div>
                         </div>
                     </div>
-                    <div class="flex justify-end gap-4 pt-4">
-                        <button type="button" data-action="close-modal" class="btn btn-secondary" data-lang="cancel">Cancel</button>
-                        <button type="submit" class="btn btn-primary" data-lang="save">Save</button>
+                    <div class="flex justify-end gap-4 mt-8">
+                        <button type="button" id="cancel-form-btn" class="btn btn-secondary" data-lang="cancel">Cancel</button>
+                        <button type="submit" id="save-form-btn" class="btn btn-primary" data-lang="save">Save</button>
                     </div>
                 </form>
             </div>
-        </div>
+            
+            <!-- Detail Panel -->
+            <div id="panel-detail" class="panel-content"></div>
+
+            <!-- Mobile Only - Full list view -->
+             <div id="panel-list-mobile" class="panel-content md:hidden"></div>
+
+        </main>
     </div>
-    
-    <!-- Detail Modal -->
-    <div id="modal-detail" class="modal-container hidden">
-         <div class="modal-content">
-            <div id="detail-content" class="p-6">
-                <!-- Details will be injected here -->
-            </div>
-            <div class="bg-gray-50 dark:bg-gray-700 p-4 flex flex-wrap justify-center gap-4">
-                <button data-action="close-modal" class="btn btn-secondary" data-lang="back_to_list">Close</button>
-                <button id="edit-building-btn" class="btn btn-primary" data-lang="edit">Edit</button>
-                <button id="delete-building-btn" class="btn btn-danger" data-lang="delete">Delete</button>
-                <button id="export-pdf-btn" class="btn btn-success" data-lang="export_pdf">Export PDF</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Scanner Modal -->
-    <div id="modal-scanner" class="modal-container hidden">
-        <div class="modal-content text-center p-4">
-             <h2 class="text-2xl font-bold mb-4" data-lang="scan_qr_code">Scan QR Code</h2>
-             <p class="mb-4 text-gray-500" data-lang="scan_instruction">Point your camera at a building's QR code.</p>
-             <div class="relative w-full max-w-md mx-auto aspect-square bg-gray-900 rounded-lg overflow-hidden">
-                 <video id="scanner-video" playsinline></video>
-                 <div class="absolute top-0 left-0 w-full h-full" style="box-shadow: inset 0 0 0 4px rgba(255,255,255,0.5);"></div>
-             </div>
-             <button data-action="close-modal" class="btn btn-secondary mt-6" data-lang="cancel">Cancel</button>
-        </div>
-    </div>
+
+     <!-- Toast Notification -->
+    <div id="toast-notification" class="toast"></div>
 
     <script>
-        // Use a self-invoking async function to encapsulate the app logic
         (async () => {
-            // --- DOM ELEMENT REFERENCES ---
-            const appContainer = document.getElementById('app-container');
-            const searchBar = document.getElementById('search-bar');
-            const buildingList = document.getElementById('building-list');
-            const emptyListMsg = document.getElementById('empty-list-msg');
-            const toggleLangBtn = document.getElementById('toggle-lang-btn');
-            
-            // Modals & Overlay
-            const modalOverlay = document.getElementById('modal-overlay');
-            const modals = {
-                form: document.getElementById('modal-form'),
-                detail: document.getElementById('modal-detail'),
-                scanner: document.getElementById('modal-scanner'),
-            };
+            const mainPanel = document.getElementById('main-panel');
+            const listPanel = document.getElementById('list-panel');
+            const panels = { home: document.getElementById('panel-home'), form: document.getElementById('panel-form'), detail: document.getElementById('panel-detail'), list: document.getElementById('panel-list-mobile') };
+            const buildingListEl = document.getElementById('building-list');
+            const buildingFormEl = document.getElementById('building-form');
+            const saveFormBtn = document.getElementById('save-form-btn');
+            const skeletonLoader = document.getElementById('skeleton-loader');
+            const emptyState = document.getElementById('empty-state');
+            const toast = document.getElementById('toast-notification');
+            let db, currentLanguage = 'en', activeBuildingId = null;
 
-            // Form Modal Elements
-            const buildingForm = document.getElementById('building-form');
-            const formTitle = document.getElementById('form-title');
-            const buildingIdInput = document.getElementById('building-id');
-            const buildingNameInput = document.getElementById('building-name');
-            const addressInput = document.getElementById('address');
-            const zipCodeInput = document.getElementById('zip-code');
-            const notesInput = document.getElementById('notes');
-            const photoInput = document.getElementById('photo');
-            const photoPreview = document.getElementById('photo-preview');
-            const getLocationBtn = document.getElementById('get-location-btn');
-            const locationDisplay = document.getElementById('location-display');
-            
-            // Detail Modal Elements
-            const detailContent = document.getElementById('detail-content');
-            const editBuildingBtn = document.getElementById('edit-building-btn');
-            const deleteBuildingBtn = document.getElementById('delete-building-btn');
-            const exportPdfBtn = document.getElementById('export-pdf-btn');
-
-            // Scanner Modal Elements
-            const scannerVideo = document.getElementById('scanner-video');
-
-            // Header & FAB
-            const optionsMenuBtn = document.getElementById('options-menu-btn');
-            const optionsMenu = document.getElementById('options-menu');
-            const addBuildingBtn = document.getElementById('add-building-btn');
-            const scanQrBtn = document.getElementById('scan-qr-btn');
-            const importExcelBtn = document.getElementById('import-excel-btn');
-            const exportExcelBtn = document.getElementById('export-excel-btn');
-            
-            // --- STATE MANAGEMENT ---
-            let db;
-            let currentBuildingId = null;
-            let currentLocation = null;
-            let currentPhotoData = null;
-            let currentLanguage = 'en';
-            let videoStream = null;
-
-            // --- LANGUAGE TRANSLATIONS ---
             const translations = {
-                en: { app_title: 'Building Info Hub', scan_qr_code: 'Scan QR Code', search_by_zip: 'Search by Postal/Zip Code...', add_new_building: 'Add New Building', import_excel: 'Import Excel', export_excel: 'Export Excel', no_buildings_found: 'No buildings found. Add one to get started!', building_name: 'Building Name', address: 'Address', zip_code: 'Postal / Zip Code', notes: 'Notes', photo: 'Photo', location: 'Location', capture_location: 'Capture Location', location_captured: 'Location Captured', cancel: 'Cancel', save: 'Save', back_to_list: 'Close', edit: 'Edit', delete: 'Delete', export_pdf: 'Export PDF', scan_instruction: "Point your camera at a building's QR code.", delete_confirm_title: 'Confirm Deletion', delete_confirm_text: 'Are you sure you want to delete this building record? This action cannot be undone.', view_details: 'View Details', pdf_title: 'Building Information', edit_building: 'Edit Building'},
-                fa: { app_title: 'مرکز اطلاعات ساختمان', scan_qr_code: 'اسکن کد QR', search_by_zip: 'جستجو بر اساس کد پستی...', add_new_building: 'افزودن ساختمان جدید', import_excel: 'ورود از اکسل', export_excel: 'خروج به اکسل', no_buildings_found: 'هیچ ساختمانی یافت نشد. برای شروع یکی اضافه کنید!', building_name: 'نام ساختمان', address: 'آدرس', zip_code: 'کد پستی', notes: 'یادداشت‌ها', photo: 'عکس', location: 'موقعیت مکانی', capture_location: 'ثبت موقعیت', location_captured: 'موقعیت ثبت شد', cancel: 'انصراف', save: 'ذخیره', back_to_list: 'بستن', edit: 'ویرایش', delete: 'حذف', export_pdf: 'خروجی PDF', scan_instruction: 'دوربین خود را به سمت کد QR ساختمان بگیرید.', delete_confirm_title: 'تایید حذف', delete_confirm_text: 'آیا از حذف این ساختمان مطمئن هستید؟ این عمل غیرقابل بازگشت است.', view_details: 'مشاهده جزئیات', pdf_title: 'اطلاعات ساختمان', edit_building: 'ویرایش ساختمان'}
-            };
-            
-            // --- PWA SERVICE WORKER ---
-            // The following registration code is disabled because the execution environment
-            // has security policies that prevent it from running. To enable PWA offline
-            // features, uncomment this block when deploying to a standard web server
-            // (like GitHub Pages) and ensure you have a `sw.js` file in the root.
-            /*
-            if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                    navigator.serviceWorker.register('sw.js')
-                        .then(reg => console.log('Service Worker registered successfully.', reg))
-                        .catch(err => console.error('Service Worker registration failed:', err));
-                });
-            }
-            */
-
-            // --- DATABASE (INDEXEDDB) ---
-            function initDB() {
-                return new Promise((resolve, reject) => {
-                    const request = indexedDB.open('BuildingHubDB', 2); // Version 2 for potential upgrades
-                    request.onerror = (event) => reject('Database error: ' + event.target.errorCode);
-                    request.onsuccess = (event) => {
-                        db = event.target.result;
-                        console.log('Database opened successfully.');
-                        resolve(db);
-                    };
-                    request.onupgradeneeded = (event) => {
-                        const db = event.target.result;
-                        if (!db.objectStoreNames.contains('buildings')) {
-                            const objectStore = db.createObjectStore('buildings', { keyPath: 'id', autoIncrement: true });
-                            objectStore.createIndex('zipCode', 'zipCode', { unique: false });
-                            objectStore.createIndex('name', 'name', { unique: false });
-                        }
-                        console.log('Database upgrade complete.');
-                    };
-                });
-            }
-            
-            // --- CRUD OPERATIONS ---
-            const crud = {
-                add: (building) => new Promise((resolve, reject) => {
-                    const tx = db.transaction('buildings', 'readwrite');
-                    tx.oncomplete = () => resolve();
-                    tx.onerror = event => reject(event.target.error);
-                    tx.objectStore('buildings').add(building);
-                }),
-                getAll: () => new Promise((resolve, reject) => {
-                    const request = db.transaction('buildings', 'readonly').objectStore('buildings').getAll();
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => reject(request.error);
-                }),
-                get: (id) => new Promise((resolve, reject) => {
-                    const request = db.transaction('buildings', 'readonly').objectStore('buildings').get(id);
-                    request.onsuccess = () => resolve(request.result);
-                    request.onerror = () => reject(request.error);
-                }),
-                update: (building) => new Promise((resolve, reject) => {
-                    const tx = db.transaction('buildings', 'readwrite');
-                    tx.oncomplete = () => resolve();
-                    tx.onerror = event => reject(event.target.error);
-                    tx.objectStore('buildings').put(building);
-                }),
-                delete: (id) => new Promise((resolve, reject) => {
-                    const tx = db.transaction('buildings', 'readwrite');
-                    tx.oncomplete = () => resolve();
-                    tx.onerror = event => reject(event.target.error);
-                    tx.objectStore('buildings').delete(id);
-                })
+                en: { home_title_1: "Building Information Hub", home_subtitle: "Select a building or add a new one.", add_new_building: "Add Building", building_info: "Building Information", name: "Name", zip_code: "ZIP/Postal Code", address: "Address", area: "Area (sqm)", notes: "Notes", save: "Save", cancel: "Cancel", search: "Search...", building_detail: "Building Detail", no_buildings_title: "No Buildings Yet", no_buildings_desc: "Click \"Add Building\" to get started.", building_saved: "Building saved!", scan_qr_code: "Scan QR", tab_address: "Address & Info", tab_property: "Property Profile", tab_notes: "Photos & Notes" },
+                fa: { home_title_1: "مرکز اطلاعات ساختمان", home_subtitle: "یک ساختمان را انتخاب یا یک ساختمان جدید اضافه کنید.", add_new_building: "افزودن ساختمان", building_info: "اطلاعات ساختمان", name: "نام", zip_code: "کد پستی", address: "آدرس", area: "مساحت (مترمربع)", notes: "یادداشت", save: "ذخیره", cancel: "انصراف", search: "جستجو...", building_detail: "جزئیات ساختمان", no_buildings_title: "ساختمانی وجود ندارد", no_buildings_desc: "برای شروع، روی «افزودن ساختمان» کلیک کنید.", building_saved: "ساختمان ذخیره شد!", scan_qr_code: "اسکن QR", tab_address: "آدرس و اطلاعات", tab_property: "مشخصات ملک", tab_notes: "عکس و یادداشت" }
             };
 
-            // --- UI & MODAL MANAGEMENT ---
-            function showModal(modalId) {
-                if (modals[modalId]) {
-                    modalOverlay.classList.remove('hidden');
-                    modals[modalId].classList.remove('hidden');
-                    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            const initDB = () => new Promise(r => {
+                const req = indexedDB.open('BIMHub_Pro_v1', 1);
+                req.onupgradeneeded = e => e.target.result.createObjectStore('buildings', { keyPath: 'id', autoIncrement: true });
+                req.onsuccess = e => { db = e.target.result; r(); };
+            });
+
+            const showToast = (messageKey, type = 'success') => {
+                toast.textContent = translations[currentLanguage][messageKey] || messageKey;
+                toast.className = `toast ${type} show`;
+                setTimeout(() => toast.classList.remove('show'), 3000);
+            };
+
+            const switchPanel = (panelId) => {
+                Object.values(panels).forEach(p => p.classList.remove('active'));
+                if (panels[panelId]) {
+                    panels[panelId].classList.add('active');
+                    if (panelId === 'form') document.getElementById('name').focus();
                 }
-            }
+            };
             
-            function hideModals() {
-                modalOverlay.classList.add('hidden');
-                Object.values(modals).forEach(modal => modal.classList.add('hidden'));
-                document.body.style.overflow = 'auto';
-                stopScanner(); // Ensure scanner is always stopped when a modal closes
-            }
-
-            function updateLanguage() {
+            const updateLanguage = () => {
+                document.body.className = currentLanguage === 'fa' ? 'persian' : 'ltr';
                 const lang = translations[currentLanguage];
-                document.documentElement.lang = currentLanguage;
-                appContainer.classList.toggle('persian', currentLanguage === 'fa');
-                document.querySelectorAll('[data-lang]').forEach(el => {
-                    const key = el.getAttribute('data-lang');
-                    el.textContent = lang[key] || el.textContent;
-                });
-                document.querySelectorAll('[data-lang-placeholder]').forEach(el => {
-                    const key = el.getAttribute('data-lang-placeholder');
-                    el.placeholder = lang[key] || el.placeholder;
-                });
-            }
-            
-            async function renderBuildingList(filter = '') {
-                const buildings = await crud.getAll();
-                buildingList.innerHTML = '';
-                const lowerFilter = filter.toLowerCase();
+                document.querySelectorAll('[data-lang]').forEach(el => el.textContent = lang[el.dataset.lang]);
+                document.querySelectorAll('[data-lang-placeholder]').forEach(el => el.placeholder = lang[el.dataset.langPlaceholder]);
+            };
+
+            const renderBuildingList = async (filter = '') => {
+                 skeletonLoader.style.display = 'block';
+                 buildingListEl.style.display = 'none';
+                 emptyState.style.display = 'none';
+
+                 const buildings = await new Promise(r => db.transaction('buildings').objectStore('buildings').getAll().onsuccess = e => r(e.target.result));
+                 
+                 skeletonLoader.style.display = 'none';
+                 buildingListEl.innerHTML = '';
+                 const lowerFilter = filter.toLowerCase();
+                 const filtered = buildings.filter(b => b.name?.toLowerCase().includes(lowerFilter) || b.zipCode?.toLowerCase().includes(lowerFilter));
                 
-                const filtered = buildings.filter(b => 
-                    b.zipCode.toLowerCase().includes(lowerFilter) || 
-                    b.name.toLowerCase().includes(lowerFilter)
-                );
-                
-                emptyListMsg.classList.toggle('hidden', filtered.length > 0);
-                
-                filtered.forEach(building => {
-                    const card = document.createElement('div');
-                    card.className = 'card cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all';
-                    card.dataset.id = building.id;
-                    const photoUrl = building.photoData || 'https://placehold.co/400x300/3498db/ffffff?text=Building';
-                    card.innerHTML = `
-                        <img src="${photoUrl}" alt="${building.name}" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/400x300/3498db/ffffff?text=Building';">
-                        <div class="p-4">
-                            <h3 class="font-bold text-lg truncate">${building.name}</h3>
-                            <p class="text-gray-600 dark:text-gray-400 truncate">${building.address}</p>
-                            <p class="text-sm font-semibold text-blue-500 mt-2">${building.zipCode}</p>
+                if (filtered.length === 0) {
+                    emptyState.style.display = 'block';
+                } else {
+                    buildingListEl.style.display = 'block';
+                    filtered.forEach(b => {
+                        const item = document.createElement('div');
+                        item.className = `p-3 rounded-lg cursor-pointer border-2 border-transparent transition-all ${b.id === activeBuildingId ? 'bg-[var(--bg-accent)] border-[var(--accent-primary)]' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`;
+                        item.dataset.id = b.id;
+                        item.innerHTML = `<h4 class="font-bold">${b.name}</h4><p class="text-sm text-[var(--text-secondary)]">${b.zipCode || ''}</p>`;
+                        item.addEventListener('click', () => displayBuildingDetail(b.id));
+                        buildingListEl.appendChild(item);
+                    });
+                }
+            };
+
+            const displayBuildingDetail = async (id) => {
+                const building = await new Promise(r => db.transaction('buildings').objectStore('buildings').get(id).onsuccess = e => r(e.target.result));
+                activeBuildingId = id;
+                renderBuildingList(document.getElementById('search-bar').value); // Re-render list to show active state
+                const detailEl = document.getElementById('panel-detail');
+                detailEl.innerHTML = '';
+                if(building) {
+                    const content = `
+                        <h1 class="text-3xl font-bold">${building.name}</h1>
+                        <p class="text-lg text-[var(--text-secondary)]">${building.address || ''}</p>
+                        <div class="mt-8 grid grid-cols-2 gap-6">
+                            <div><h5 class="text-sm text-[var(--text-secondary)]" data-lang="zip_code">ZIP</h5><p class="font-bold text-lg">${building.zipCode || 'N/A'}</p></div>
+                            <div><h5 class="text-sm text-[var(--text-secondary)]" data-lang="area">Area</h5><p class="font-bold text-lg">${building.area || 'N/A'} sqm</p></div>
                         </div>
+                         <div class="mt-6"><h5 class="text-sm text-[var(--text-secondary)]" data-lang="notes">Notes</h5><p>${building.notes || 'No notes available.'}</p></div>
                     `;
-                    card.addEventListener('click', () => showDetailView(building.id));
-                    buildingList.appendChild(card);
-                });
-            }
-            
-            async function showDetailView(id) {
-                const building = await crud.get(id);
-                if (!building) return;
-                
-                currentBuildingId = id;
-                const photoUrl = building.photoData || 'https://placehold.co/400x300/3498db/ffffff?text=Building';
-                const locationLink = building.location ? `https://www.google.com/maps?q=${building.location.lat},${building.location.lon}` : '#';
-                const locationText = building.location ? `${building.location.lat.toFixed(5)}, ${building.location.lon.toFixed(5)}` : 'N/A';
-
-                detailContent.innerHTML = `
-                     <div class="flex flex-col md:flex-row gap-6">
-                        <div class="md:w-1/2">
-                            <img src="${photoUrl}" alt="${building.name}" class="w-full h-auto rounded-lg shadow-md object-cover" onerror="this.onerror=null;this.src='https://placehold.co/400x300/3498db/ffffff?text=Building';">
-                        </div>
-                        <div class="md:w-1/2 flex flex-col">
-                            <h2 class="text-3xl font-bold mb-2">${building.name}</h2>
-                            <p class="text-lg text-gray-500 dark:text-gray-400 mb-4">${building.address}</p>
-                            <p class="mb-4"><strong data-lang="zip_code"></strong>: ${building.zipCode}</p>
-                            <p class="mb-4"><strong data-lang="notes"></strong>:<br><span class="text-gray-600 dark:text-gray-400">${building.notes || 'N/A'}</span></p>
-                             <p class="mb-4"><strong data-lang="location"></strong>: <a href="${locationLink}" target="_blank" class="text-blue-500 hover:underline">${locationText}</a></p>
-                            <div class="mt-auto pt-4 flex justify-center" id="qr-code-container-modal"></div>
-                        </div>
-                    </div>
-                `;
-                
-                new QRCode(detailContent.querySelector('#qr-code-container-modal'), { text: `BIM_HUB_BUILDING_ID::${building.id}`, width: 128, height: 128, colorDark : "#000000", colorLight : "#ffffff" });
-                
-                showModal('detail');
-                updateLanguage();
-            }
-            
-            function openFormForNew() {
-                formTitle.setAttribute('data-lang', 'add_new_building');
-                buildingForm.reset();
-                buildingIdInput.value = '';
-                photoPreview.src = '';
-                photoPreview.classList.add('hidden');
-                locationDisplay.textContent = '';
-                currentLocation = null;
-                currentPhotoData = null;
-                showModal('form');
-                updateLanguage();
-            }
-
-            async function openFormForEdit(id) {
-                const building = await crud.get(id);
-                formTitle.textContent = `${translations[currentLanguage].edit_building}: ${building.name}`;
-                formTitle.removeAttribute('data-lang');
-                
-                buildingIdInput.value = building.id;
-                buildingNameInput.value = building.name;
-                addressInput.value = building.address;
-                zipCodeInput.value = building.zipCode;
-                notesInput.value = building.notes;
-                currentPhotoData = building.photoData;
-                photoPreview.src = currentPhotoData || '';
-                photoPreview.classList.toggle('hidden', !currentPhotoData);
-                currentLocation = building.location;
-                if(currentLocation) {
-                    locationDisplay.textContent = `${translations[currentLanguage].location_captured}: ${currentLocation.lat.toFixed(4)}, ${currentLocation.lon.toFixed(4)}`;
-                } else {
-                    locationDisplay.textContent = '';
+                    detailEl.innerHTML = content;
                 }
-                showModal('form');
-            }
-            
-            // --- EVENT LISTENERS & HANDLERS ---
-            addBuildingBtn.addEventListener('click', openFormForNew);
+                switchPanel('detail');
+                updateLanguage();
+            };
 
-            document.addEventListener('click', (e) => {
-                if(e.target.dataset.action === 'close-modal') {
-                    hideModals();
-                }
-            });
-
-            buildingForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const id = buildingIdInput.value ? parseInt(buildingIdInput.value) : null;
-                const buildingData = { name: buildingNameInput.value, address: addressInput.value, zipCode: zipCodeInput.value, notes: notesInput.value, photoData: currentPhotoData, location: currentLocation };
+            const openForm = async (id = null) => {
+                buildingFormEl.reset();
                 if (id) {
-                    buildingData.id = id;
-                    await crud.update(buildingData);
-                } else {
-                    await crud.add(buildingData);
+                    const building = await new Promise(r => db.transaction('buildings').objectStore('buildings').get(id).onsuccess = e => r(e.target.result));
+                    Object.keys(building).forEach(key => {
+                        const el = document.getElementById(key);
+                        if(el) el.value = building[key];
+                    });
                 }
-                hideModals();
-                await renderBuildingList();
-            });
+                validateForm();
+                switchPanel('form');
+            };
 
-            photoInput.addEventListener('change', () => {
-                const file = photoInput.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        currentPhotoData = e.target.result;
-                        photoPreview.src = currentPhotoData;
-                        photoPreview.classList.remove('hidden');
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
+            const validateForm = () => saveFormBtn.disabled = !document.getElementById('name').value.trim();
+            document.getElementById('name').addEventListener('input', validateForm);
 
-            getLocationBtn.addEventListener('click', () => {
-                if ('geolocation' in navigator) {
-                    getLocationBtn.disabled = true;
-                    getLocationBtn.textContent = '...';
-                    navigator.geolocation.getCurrentPosition(
-                        (position) => {
-                            currentLocation = { lat: position.coords.latitude, lon: position.coords.longitude };
-                            locationDisplay.textContent = `${translations[currentLanguage].location_captured}: ${currentLocation.lat.toFixed(4)}, ${currentLocation.lon.toFixed(4)}`;
-                            getLocationBtn.disabled = false;
-                            updateLanguage();
-                        },
-                        (error) => { console.error(`Geolocation error: ${error.message}`); getLocationBtn.disabled = false; updateLanguage(); }
-                    );
-                } else { console.error('Geolocation is not supported.'); }
-            });
-
-            editBuildingBtn.addEventListener('click', () => {
-                hideModals();
-                openFormForEdit(currentBuildingId);
-            });
+            document.getElementById('add-building-btn').addEventListener('click', () => openForm());
+            document.getElementById('cancel-form-btn').addEventListener('click', () => switchPanel('home'));
+            document.getElementById('search-bar').addEventListener('input', e => renderBuildingList(e.target.value));
             
-            deleteBuildingBtn.addEventListener('click', async () => {
-                const lang = translations[currentLanguage];
-                if (confirm(`${lang.delete_confirm_title}\n\n${lang.delete_confirm_text}`)) {
-                    await crud.delete(currentBuildingId);
-                    hideModals();
+            // Tab switching logic
+            buildingFormEl.querySelector('.flex.space-x-6').addEventListener('click', e => {
+                if(e.target.matches('.tab')) {
+                    const tabNum = e.target.dataset.tab;
+                    buildingFormEl.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    buildingFormEl.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+                    buildingFormEl.querySelector(`.tab-pane[data-tab-pane="${tabNum}"]`).classList.remove('hidden');
+                }
+            });
+
+            buildingFormEl.addEventListener('submit', async e => {
+                e.preventDefault();
+                const data = Object.fromEntries(new FormData(e.target).entries());
+                const id = parseInt(document.getElementById('building-id').value);
+                if(id) data.id = id;
+                
+                const tx = db.transaction('buildings', 'readwrite');
+                const req = tx.objectStore('buildings').put(data);
+                req.onsuccess = async () => {
                     await renderBuildingList();
-                }
+                    displayBuildingDetail(req.result);
+                    showToast('building_saved', 'success');
+                };
             });
             
-            searchBar.addEventListener('input', (e) => renderBuildingList(e.target.value));
-            toggleLangBtn.addEventListener('click', () => { currentLanguage = currentLanguage === 'en' ? 'fa' : 'en'; updateLanguage(); });
-
-            // --- QR CODE SCANNER ---
-            function startScanner() {
-                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                    showModal('scanner');
-                    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-                        .then(stream => {
-                            videoStream = stream;
-                            scannerVideo.srcObject = stream;
-                            scannerVideo.play();
-                            requestAnimationFrame(tickScanner);
-                        })
-                        .catch(err => { console.error("Camera error: ", err); hideModals(); });
-                }
-            }
-            
-            function stopScanner() {
-                if (videoStream) {
-                    videoStream.getTracks().forEach(track => track.stop());
-                    videoStream = null;
-                }
-            }
-
-            function tickScanner() {
-                if (!videoStream) return; // Stop if stream is closed
-                if (scannerVideo.readyState === scannerVideo.HAVE_ENOUGH_DATA) {
-                    const canvasElement = document.createElement('canvas');
-                    canvasElement.height = scannerVideo.videoHeight;
-                    canvasElement.width = scannerVideo.videoWidth;
-                    const canvas = canvasElement.getContext('2d');
-                    canvas.drawImage(scannerVideo, 0, 0, canvasElement.width, canvasElement.height);
-                    const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
-                    const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
-
-                    if (code && code.data.startsWith('BIM_HUB_BUILDING_ID::')) {
-                        hideModals();
-                        const id = parseInt(code.data.split('::')[1]);
-                        showDetailView(id);
-                        return;
-                    }
-                }
-                requestAnimationFrame(tickScanner);
-            }
-
-            // --- HEADER MENU & IMPORT/EXPORT ---
-            optionsMenuBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                optionsMenu.classList.toggle('hidden');
-            });
-            document.addEventListener('click', () => optionsMenu.classList.add('hidden'));
-
-            function handleMenuAction(callback) {
-                return (e) => {
-                    e.preventDefault();
-                    optionsMenu.classList.add('hidden');
-                    callback();
-                };
-            }
-            scanQrBtn.addEventListener('click', handleMenuAction(startScanner));
-
-            exportExcelBtn.addEventListener('click', handleMenuAction(async () => {
-                const buildings = await crud.getAll();
-                const dataToExport = buildings.map(b => ({ ID: b.id, Name: b.name, Address: b.address, ZipCode: b.zipCode, Notes: b.notes, Latitude: b.location?.lat, Longitude: b.location?.lon }));
-                const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-                const workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, worksheet, "Buildings");
-                XLSX.writeFile(workbook, "Building_Information_Export.xlsx");
-            }));
-
-            importExcelBtn.addEventListener('click', handleMenuAction(() => {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = ".xlsx, .xls";
-                input.onchange = e => {
-                    const file = e.target.files[0];
-                    const reader = new FileReader();
-                    reader.onload = async (event) => {
-                        const data = new Uint8Array(event.target.result);
-                        const workbook = XLSX.read(data, {type: 'array'});
-                        const ws = workbook.Sheets[workbook.SheetNames[0]];
-                        const json = XLSX.utils.sheet_to_json(ws);
-                        for(const item of json) {
-                            await crud.add({ name: item.Name, address: item.Address, zipCode: String(item.ZipCode), notes: item.Notes, location: (item.Latitude && item.Longitude) ? {lat: item.Latitude, lon: item.Longitude} : null, photoData: null });
-                        }
-                        await renderBuildingList();
-                    };
-                    reader.readAsArrayBuffer(file);
-                };
-                input.click();
-            }));
-
-            // --- PDF EXPORT ---
-            exportPdfBtn.addEventListener('click', async () => {
-                const { jsPDF } = window.jspdf;
-                const building = await crud.get(currentBuildingId);
-                const lang = translations[currentLanguage];
-                const doc = new jsPDF();
-                
-                doc.setFontSize(22);
-                doc.text(lang.pdf_title, 10, 20);
-                doc.setFontSize(16);
-                doc.text(building.name, 10, 35);
-                doc.setFontSize(12);
-                let y = 50;
-                
-                function addText(label, value) {
-                    if (!value) return;
-                    if(currentLanguage === 'fa') { doc.text(value, 200, y, { align: 'right' }); doc.text(label, 10, y); } 
-                    else { doc.text(`${label}: ${value}`, 10, y); }
-                    y += 10;
-                }
-                
-                addText(lang.address, building.address);
-                addText(lang.zip_code, building.zipCode);
-                const notesLines = doc.splitTextToSize(building.notes || '', 180);
-                addText(lang.notes, '');
-                doc.text(notesLines, 10, y);
-                y += (notesLines.length * 5);
-                if (building.location) addText(lang.location, `${building.location.lat.toFixed(5)}, ${building.location.lon.toFixed(5)}`);
-                if (building.photoData) {
-                    try {
-                        const img = new Image();
-                        img.src = building.photoData;
-                        await new Promise(resolve => img.onload = resolve);
-                        const props = doc.getImageProperties(img);
-                        const w = 100;
-                        const h = (props.height * w) / props.width;
-                        if (y + h > 280) { doc.addPage(); y = 20; }
-                        doc.addImage(img, 'PNG', 10, y, w, h);
-                    } catch (e) { console.error("PDF image error:", e); }
-                }
-                doc.save(`${building.name}_Info.pdf`);
-            });
-
-            // --- INITIALIZATION ---
-            async function main() {
-                await initDB();
-                await renderBuildingList();
-                updateLanguage();
-            }
-
-            main();
+            await initDB();
+            await renderBuildingList();
+            updateLanguage();
         })();
     </script>
+
 </body>
 </html>
