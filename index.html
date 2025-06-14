@@ -41,7 +41,7 @@
         .btn-danger { @apply bg-red-600 hover:bg-red-700; }
         
         .modal-overlay { @apply fixed inset-0 bg-black bg-opacity-50 transition-opacity; }
-        .modal-container { @apply fixed inset-0 flex items-center justify-center p-4; }
+        .modal-container { @apply fixed inset-0 flex items-center justify-center p-4 z-50; }
         .modal-content { @apply bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg max-h-full overflow-y-auto; }
 
         /* Animation for modals */
@@ -85,7 +85,7 @@
         </main>
         
         <!-- Floating Action Button (FAB) -->
-        <button id="add-building-btn" title="Add New Building" class="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110">
+        <button id="add-building-btn" title="Add New Building" class="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110 z-40">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
         </button>
     </div>
@@ -228,21 +228,19 @@
             };
             
             // --- PWA SERVICE WORKER ---
-            // The following Service Worker registration code has been disabled.
-            // The execution environment throws an error because it does not support
-            // registering a Service Worker from a 'blob:' URL or a local file path. 
-            // This is a security restriction in this specific sandboxed environment.
-            // While this means the app won't work offline in this preview,
-            // the rest of its functionality will work as expected. In a real-world
-            // deployment (like on GitHub Pages), you would use a separate `sw.js` file
-            // and the code below would work correctly.
+            // The following registration code is disabled because the execution environment
+            // has security policies that prevent it from running. To enable PWA offline
+            // features, uncomment this block when deploying to a standard web server
+            // (like GitHub Pages) and ensure you have a `sw.js` file in the root.
+            /*
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
                     navigator.serviceWorker.register('sw.js')
-                        .then(reg => console.log('Service Worker registered.', reg))
+                        .then(reg => console.log('Service Worker registered successfully.', reg))
                         .catch(err => console.error('Service Worker registration failed:', err));
                 });
             }
+            */
 
             // --- DATABASE (INDEXEDDB) ---
             function initDB() {
@@ -558,7 +556,7 @@
                 const worksheet = XLSX.utils.json_to_sheet(dataToExport);
                 const workbook = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(workbook, worksheet, "Buildings");
-                XLSX.writeFile(workbook, "Building_Info_Export.xlsx");
+                XLSX.writeFile(workbook, "Building_Information_Export.xlsx");
             }));
 
             importExcelBtn.addEventListener('click', handleMenuAction(() => {
