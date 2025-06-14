@@ -1,298 +1,805 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Building Information Model Hub</title>
+    <title>Building Information Hub</title>
     
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#FFFFFF">
-    <link rel="apple-touch-icon" href="https://placehold.co/192x192/000000/ffffff?text=BIM">
-
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- Font Links -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap" rel="stylesheet">
 
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <!-- JS Libraries -->
+    <script src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 
     <style>
         :root {
-            --bg-main: #F4F7FC;
-            --bg-panel: #FFFFFF;
-            --text-primary: #1A202C;
-            --text-secondary: #718096;
-            --accent-primary: #4A90E2; /* A professional blue */
-            --accent-secondary: #50E3C2; /* A vibrant mint for highlights */
-            --border-color: #E2E8F0;
-            --toast-success: #C6F6D5;
-            --toast-error: #FED7D7;
-            --text-success: #2F855A;
-            --text-error: #C53030;
-        }
-        .dark {
-             --bg-main: #1A202C;
-             --bg-panel: #2D3748;
-             --text-primary: #F7FAFC;
-             --text-secondary: #A0AEC0;
-             --border-color: #4A5568;
+            --primary-color: #03396c;
+            --primary-color-dark: #022a50;
+            --primary-color-light: #044a88;
+            --background-color: #F7F7F5;
+            --card-background-color: #FFFFFF;
+            --text-color: #37352F;
+            --text-color-light: #5E5C56;
+            --border-color: #EAEAEA;
         }
 
-        body { font-family: 'Ubuntu', sans-serif; background-color: var(--bg-main); color: var(--text-primary); }
-        .persian { font-family: 'Vazirmatn', sans-serif; direction: rtl; }
+        body {
+            font-family: 'Ubuntu', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+        html[dir="rtl"] body {
+            font-family: 'Vazirmatn', sans-serif;
+        }
+        html[dir="rtl"] #back-button {
+            transform: scaleX(-1);
+        }
+        .page { display: none; }
+        .page.active { display: block; }
         
-        .panel-content { @apply hidden; }
-        .panel-content.active { @apply block; }
-        
-        .btn { @apply w-full text-center py-3 px-6 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2; }
-        .btn-primary { @apply bg-[var(--accent-primary)] text-white hover:opacity-90 focus:ring-[var(--accent-primary)]; }
-        .btn-secondary { @apply bg-[var(--border-color)] text-[var(--text-primary)] hover:bg-opacity-80 focus:ring-[var(--text-secondary)]; }
-        .btn:disabled { @apply bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed; }
+        header {
+            background-color: var(--primary-color);
+            color: #FFFFFF;
+        }
 
-        .input-field { @apply w-full border border-[var(--border-color)] rounded-lg py-2 px-4 bg-transparent focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]; }
-        .tab { @apply py-2 px-4 font-medium text-[var(--text-secondary)] border-b-2 border-transparent cursor-pointer; }
-        .tab.active { @apply text-[var(--accent-primary)] border-[var(--accent-primary)]; }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-background-color);
+            transition: background-color 0.2s, color 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .btn:hover {
+            background-color: #f8f9fa;
+        }
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: #FFFFFF;
+            border-color: var(--primary-color);
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-color-dark);
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.25rem;
+            background-color: var(--background-color);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(3, 57, 108, 0.2);
+        }
         
-        .skeleton { @apply bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse; }
-        .toast { @apply fixed bottom-5 right-5 p-4 rounded-xl shadow-lg transition-all duration-300 transform translate-y-[200%]; z-50; }
-        .toast.show { @apply translate-y-0; }
-        .toast.success { background-color: var(--toast-success); color: var(--text-success); }
-        .toast.error { background-color: var(--toast-error); color: var(--text-error); }
+        .number-stepper {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border-color);
+            border-radius: 0.25rem;
+            overflow: hidden;
+            width: fit-content;
+        }
+        .number-stepper input {
+            border: none;
+            text-align: center;
+            width: 4rem;
+            height: 2.5rem;
+            -moz-appearance: textfield;
+        }
+        .number-stepper input::-webkit-outer-spin-button,
+        .number-stepper input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .stepper-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            background-color: #f3f4f6;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-weight: 300;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        .stepper-btn:hover {
+            background-color: #e5e7eb;
+        }
+        
+        #qr-reader-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            border-radius: 1rem;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .section-container {
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            background-color: var(--card-background-color);
+            box-shadow: none;
+        }
+        
+        .thumbnail-container { position: relative; }
+        .thumbnail-delete {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: #e53e3e;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+            border: 2px solid white;
+        }
+        html[dir="rtl"] .thumbnail-delete {
+            right: auto;
+            left: -10px;
+        }
+        
+        #confirm-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        #confirm-modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        #confirm-modal {
+            background: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
     </style>
 </head>
-<body>
+<body class="bg-gray-50">
+    <div id="save-progress-bar" class="fixed top-0 left-0 h-1 bg-[var(--primary-color-light)] w-0 transition-all duration-500 z-[1001]"></div>
 
-    <div class="flex h-screen">
-        <!-- Sidebar / List Panel -->
-        <aside id="list-panel" class="bg-[var(--bg-panel)] w-full md:w-1/3 lg:w-1/4 h-screen flex-col border-r border-[var(--border-color)] hidden md:flex">
-            <header class="p-4 border-b border-[var(--border-color)]">
-                <input type="search" id="search-bar" class="input-field" data-lang-placeholder="search">
-            </header>
-            <div id="building-list-container" class="p-4 space-y-3 overflow-y-auto">
-                <!-- Skeleton Loader -->
-                <div id="skeleton-loader">
-                    <div class="h-16 skeleton"></div>
-                    <div class="h-16 mt-3 skeleton"></div>
-                    <div class="h-16 mt-3 skeleton"></div>
+    <div id="app" class="max-w-4xl mx-auto">
+        <header class="sticky top-0 z-50">
+            <div class="mx-auto px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <svg id="back-button" class="w-6 h-6 cursor-pointer hidden text-white hover:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    <h1 id="header-title" class="text-xl font-bold"></h1>
                 </div>
-                <!-- Building List -->
-                <div id="building-list"></div>
-                <!-- Empty State -->
-                <div id="empty-state" class="text-center p-8 hidden">
-                    <h3 class="font-bold text-lg" data-lang="no_buildings_title">No Buildings Yet</h3>
-                    <p class="text-sm text-[var(--text-secondary)]" data-lang="no_buildings_desc">Click "Add Building" to get started.</p>
+                 <div class="flex items-center space-x-4">
+                    <div id="header-actions"></div>
+                    <button id="lang-switcher" class="font-bold text-lg p-2 rounded-md hover:bg-black/20 w-12 text-center"></button>
                 </div>
             </div>
-            <footer class="p-4 mt-auto border-t border-[var(--border-color)] grid grid-cols-2 gap-3">
-                 <button class="btn btn-secondary !py-2" id="add-building-btn"><span data-lang="add_new_building">Add Building</span></button>
-                 <button class="btn btn-secondary !py-2" id="scan-qr-btn"><span data-lang="scan_qr_code">Scan QR</span></button>
-            </footer>
-        </aside>
+        </header>
 
-        <!-- Main Content Panel -->
-        <main id="main-panel" class="flex-1 h-screen overflow-y-auto p-8">
-            <!-- Home/Welcome Panel -->
-            <div id="panel-home" class="panel-content active">
-                 <h1 class="text-4xl font-bold" data-lang="home_title_1">Building Information Hub</h1>
-                 <p class="text-lg text-[var(--text-secondary)] mt-2" data-lang="home_subtitle">Select a building or add a new one.</p>
+        <main class="p-4 md:p-6">
+            <div id="page-home" class="page active">
+                <div class="flex flex-col items-center justify-center h-[70vh] text-center">
+                    <h2 id="home-title" data-lang="app_title" class="text-3xl font-bold text-[var(--text-color)] mb-6"></h2>
+                    <button data-target="page-admin" class="nav-button btn btn-primary w-full max-w-sm">
+                        <span data-lang="add_building"></span>
+                    </button>
+                </div>
             </div>
-            
-            <!-- Form Panel -->
-            <div id="panel-form" class="panel-content">
-                <form id="building-form" class="max-w-2xl mx-auto">
-                    <input type="hidden" id="building-id">
-                    <h1 class="text-3xl font-bold mb-6" data-lang="building_info">Building Information</h1>
-                    <!-- Form Tabs -->
-                    <div class="border-b border-[var(--border-color)] mb-6">
-                        <nav class="-mb-px flex space-x-6 rtl:space-x-reverse">
-                            <button type="button" class="tab active" data-tab="1" data-lang="tab_address">Address & Info</button>
-                            <button type="button" class="tab" data-tab="2" data-lang="tab_property">Property Profile</button>
-                            <button type="button" class="tab" data-tab="3" data-lang="tab_notes">Photos & Notes</button>
-                        </nav>
+
+            <div id="page-admin" class="page">
+                <div class="mb-6 sticky top-[61px] bg-[var(--background-color)] py-3 z-10">
+                    <div class="relative">
+                        <input type="search" id="search-bar" class="form-input pl-10" autocomplete="off">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
                     </div>
-                    <!-- Tab Content -->
-                    <div id="tab-content" class="space-y-4">
-                        <div class="tab-pane active" data-tab-pane="1">
-                            <div class="input-group"><label class="font-medium mb-1 block" for="name" data-lang="name">Name *</label><input type="text" id="name" class="input-field" required></div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                                <div class="input-group"><label class="font-medium mb-1 block" for="zipCode" data-lang="zip_code">ZIP/Postal Code</label><input type="text" id="zipCode" class="input-field"></div>
-                                <div class="input-group"><label class="font-medium mb-1 block" for="address" data-lang="address">Address</label><input type="text" id="address" class="input-field"></div>
+                </div>
+                <div id="building-list" class="space-y-3"></div>
+                <div id="empty-admin-state" class="text-center py-16 text-gray-500 hidden">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900" data-lang="no_buildings_found"></h3>
+                    <p class="mt-1 text-sm text-gray-500" data-lang="click_plus_to_add"></p>
+                </div>
+            </div>
+
+            <div id="page-form" class="page relative">
+                <form id="building-form" class="space-y-8">
+                    <input type="hidden" id="id">
+                    <div class="section-container">
+                        <h3 class="font-bold text-xl mb-6" data-lang="form_section_address"></h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="md:col-span-2">
+                                <label for="buildingName" class="block text-sm font-medium text-gray-700 mb-1" data-lang="form_building_name"></label>
+                                <input type="text" id="buildingName" required class="form-input">
+                            </div>
+                            <div>
+                                <label for="street" class="block text-sm font-medium text-gray-700 mb-1" data-lang="form_street"></label>
+                                <input type="text" id="street" class="form-input">
+                            </div>
+                            <div><label for="city" class="block text-sm font-medium text-gray-700 mb-1" data-lang="form_city"></label><input type="text" id="city" class="form-input"></div>
+                            <div><label for="stateProvince" class="block text-sm font-medium text-gray-700 mb-1" data-lang="form_state_province"></label><input type="text" id="stateProvince" class="form-input"></div>
+                            <div><label for="zipPostal" class="block text-sm font-medium text-gray-700 mb-1" data-lang="form_zip_postal"></label><input type="text" id="zipPostal" class="form-input"></div>
+                            <div><label for="country" class="block text-sm font-medium text-gray-700 mb-1" data-lang="form_country"></label><input type="text" id="country" class="form-input"></div>
+                            <div><label for="webpage" class="block text-sm font-medium text-gray-700 mb-1" data-lang="form_webpage"></label><input type="url" id="webpage" class="form-input"></div>
+                            <div class="md:col-span-2 border-t pt-6 mt-2">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div><label for="latitude" class="block text-sm font-medium text-gray-700 mb-1" data-lang="form_latitude"></label><input type="text" id="latitude" class="form-input bg-gray-100" readonly></div>
+                                    <div><label for="longitude" class="block text-sm font-medium text-gray-700 mb-1" data-lang="form_longitude"></label><input type="text" id="longitude" class="form-input bg-gray-100" readonly></div>
+                                    <div class="md:col-span-2"><button type="button" id="get-location-btn" class="btn btn-primary w-full" data-lang="form_get_location"></button></div>
+                                </div>
                             </div>
                         </div>
-                        <div class="tab-pane hidden" data-tab-pane="2">
-                             <div class="input-group"><label class="font-medium mb-1 block" for="area" data-lang="area">Area (sqm)</label><input type="number" id="area" class="input-field"></div>
+                    </div>
+                    <div class="section-container">
+                        <h3 class="font-bold text-xl mb-6" data-lang="form_section_profile"></h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="md:col-span-2"><label for="propertyType" class="block text-sm font-medium text-gray-700 mb-1" data-lang="form_property_type"></label><select id="propertyType" class="form-select"></select></div>
+                            <div>
+                                <label for="yearBuilt" class="block text-sm font-medium text-gray-700 mb-1" data-lang="form_year_built"></label>
+                                <input type="text" inputmode="numeric" id="yearBuilt" placeholder="YYYY" class="form-input">
+                            </div>
+                            <div>
+                                <label for="squareFeet" class="block text-sm font-medium text-gray-700 mb-1" data-lang="form_sqm"></label>
+                                <input type="text" inputmode="numeric" id="squareFeet" class="form-input">
+                            </div>
+
+                            <div class="flex flex-col items-start">
+                                <label for="bedrooms" class="block text-sm font-medium text-gray-700 mb-1" data-lang="form_bedrooms"></label>
+                                <div class="number-stepper">
+                                    <button type="button" class="stepper-btn stepper-minus" data-target="bedrooms">-</button>
+                                    <input type="text" inputmode="numeric" id="bedrooms" class="form-input w-20" value="0">
+                                    <button type="button" class="stepper-btn stepper-plus" data-target="bedrooms">+</button>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-start">
+                                <label for="bathrooms" class="block text-sm font-medium text-gray-700 mb-1" data-lang="form_bathrooms"></label>
+                                <div class="number-stepper">
+                                    <button type="button" class="stepper-btn stepper-minus" data-target="bathrooms">-</button>
+                                    <input type="text" inputmode="numeric" id="bathrooms" class="form-input w-20" value="0">
+                                    <button type="button" class="stepper-btn stepper-plus" data-target="bathrooms">+</button>
+                                </div>
+                            </div>
+                            <div class="md:col-span-2 flex items-center pt-2">
+                                <input type="checkbox" id="garage" class="h-4 w-4 text-[var(--primary-color)] border-gray-300 rounded focus:ring-[var(--primary-color)]">
+                                <label for="garage" class="ml-3 block text-sm text-gray-900" data-lang="form_garage"></label>
+                            </div>
                         </div>
-                         <div class="tab-pane hidden" data-tab-pane="3">
-                             <div class="input-group"><label class="font-medium mb-1 block" for="notes" data-lang="notes">Notes</label><textarea id="notes" class="input-field"></textarea></div>
+                        <h3 class="font-bold text-xl mb-6 mt-8 pt-8 border-t" data-lang="form_section_financials"></h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div><label for="loanAmount" class="block text-sm font-medium text-gray-700 mb-1" data-lang="form_loan_amount"></label><input type="text" inputmode="numeric" id="loanAmount" class="form-input currency"></div>
+                            <div><label for="assessedValue" class="block text-sm font-medium text-gray-700 mb-1" data-lang="form_assessed_value"></label><input type="text" inputmode="numeric" id="assessedValue" class="form-input currency"></div>
+                            <div><label for="currentValue" class="block text-sm font-medium text-gray-700 mb-1" data-lang="form_current_value"></label><input type="text" inputmode="numeric" id="currentValue" class="form-input currency"></div>
+                            <div><label for="downPayment" class="block text-sm font-medium text-gray-700 mb-1" data-lang="form_down_payment"></label><input type="text" inputmode="numeric" id="downPayment" class="form-input currency"></div>
+                            <div><label for="monthlyMortgage" class="block text-sm font-medium text-gray-700 mb-1" data-lang="form_monthly_mortgage"></label><input type="text" inputmode="numeric" id="monthlyMortgage" class="form-input currency"></div>
+                            <div><label for="housingDues" class="block text-sm font-medium text-gray-700 mb-1" data-lang="form_housing_dues"></label><input type="text" inputmode="numeric" id="housingDues" class="form-input currency"></div>
+                            <div><label for="tax" class="block text-sm font-medium text-gray-700 mb-1" data-lang="form_tax"></label><input type="text" inputmode="numeric" id="tax" class="form-input currency"></div>
+                            <div><label for="insurance" class="block text-sm font-medium text-gray-700 mb-1" data-lang="form_insurance"></label><input type="text" inputmode="numeric" id="insurance" class="form-input currency"></div>
                         </div>
                     </div>
-                    <div class="flex justify-end gap-4 mt-8">
-                        <button type="button" id="cancel-form-btn" class="btn btn-secondary" data-lang="cancel">Cancel</button>
-                        <button type="submit" id="save-form-btn" class="btn btn-primary" data-lang="save">Save</button>
+                    <div class="section-container">
+                        <h3 class="font-bold text-xl mb-2" data-lang="form_section_photos"></h3>
+                        <p class="text-sm text-gray-500 mb-4" data-lang="form_photos_note"></p>
+                        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+                           <label for="photo-upload" class="btn w-full"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span data-lang="form_upload_gallery"></span></label>
+                           <input type="file" id="photo-upload" class="hidden" accept="image/*" multiple>
+                           <label for="photo-capture" class="btn btn-primary w-full"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg><span data-lang="form_take_photo"></span></label>
+                           <input type="file" id="photo-capture" class="hidden" accept="image/*" capture="environment">
+                        </div>
+                        <div id="photo-thumbnails" class="mt-6 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4"></div>
+                        <h3 class="font-bold text-xl mb-4 mt-8 pt-8 border-t" data-lang="form_section_notes"></h3>
+                        <textarea id="notes" rows="4" class="form-textarea"></textarea>
                     </div>
+                    <div class="pt-6 flex justify-end items-center space-x-4"><button type="button" id="form-cancel-btn" class="btn" data-lang="cancel"></button><button type="button" id="form-save-btn" class="btn btn-primary" data-lang="generate_qr"></button></div>
                 </form>
             </div>
-            
-            <!-- Detail Panel -->
-            <div id="panel-detail" class="panel-content"></div>
 
-            <!-- Mobile Only - Full list view -->
-             <div id="panel-list-mobile" class="panel-content md:hidden"></div>
+            <div id="page-detail" class="page space-y-6">
+                <div class="section-container text-center">
+                   <h2 id="detail-building-name" class="text-2xl md:text-3xl font-bold text-gray-900 mb-2"></h2>
+                   <div id="detail-qr-code-container" class="mt-4 p-4 bg-white inline-block rounded-lg border border-gray-200 shadow-sm"></div>
+                </div>
+                <div id="detail-content" class="space-y-6"></div>
+                <div class="mt-2 flex flex-wrap justify-center gap-4">
+                    <button id="detail-download-qr-btn" class="btn"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg><span data-lang="download_qr_image"></span></button>
+                    <button id="detail-export-excel-btn" class="btn"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg><span data-lang="export_to_excel"></span></button>
+                    <button id="detail-export-pdf-btn" class="btn btn-primary"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg><span data-lang="export_to_pdf"></span></button>
+                </div>
+            </div>
 
+            <div id="page-scanner" class="page">
+                <div id="qr-reader-container"><div id="qr-reader"></div></div>
+                <p class="text-center text-gray-500 mt-4" data-lang="scan_instruction"></p>
+            </div>
         </main>
+        
+        <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 text-white py-2 px-4 rounded-lg shadow-lg transition-transform duration-300 translate-y-20 opacity-0"><p id="toast-message"></p></div>
+
+        <div id="confirm-modal-overlay">
+            <div id="confirm-modal">
+                <p id="confirm-modal-message" class="text-lg text-gray-800 mb-6"></p>
+                <div class="flex justify-center space-x-4">
+                    <button id="confirm-modal-no" class="btn w-28"></button>
+                    <button id="confirm-modal-yes" class="btn btn-primary w-28"></button>
+                </div>
+            </div>
+        </div>
     </div>
 
-     <!-- Toast Notification -->
-    <div id="toast-notification" class="toast"></div>
-
     <script>
-        (async () => {
-            const mainPanel = document.getElementById('main-panel');
-            const listPanel = document.getElementById('list-panel');
-            const panels = { home: document.getElementById('panel-home'), form: document.getElementById('panel-form'), detail: document.getElementById('panel-detail'), list: document.getElementById('panel-list-mobile') };
-            const buildingListEl = document.getElementById('building-list');
-            const buildingFormEl = document.getElementById('building-form');
-            const saveFormBtn = document.getElementById('save-form-btn');
-            const skeletonLoader = document.getElementById('skeleton-loader');
-            const emptyState = document.getElementById('empty-state');
-            const toast = document.getElementById('toast-notification');
-            let db, currentLanguage = 'en', activeBuildingId = null;
+        document.addEventListener('DOMContentLoaded', () => {
+            const DB_KEY = 'qrBuildingApp_buildings';
+            const LANG_KEY = 'qrBuildingApp_lang';
+            const state = { currentPage: 'page-home', history: [], activeScanner: null, photoCache: [], currentLang: localStorage.getItem(LANG_KEY) || 'en', isNewFormEntry: false, photosLoading: 0, confirmCallback: null };
 
             const translations = {
-                en: { home_title_1: "Building Information Hub", home_subtitle: "Select a building or add a new one.", add_new_building: "Add Building", building_info: "Building Information", name: "Name", zip_code: "ZIP/Postal Code", address: "Address", area: "Area (sqm)", notes: "Notes", save: "Save", cancel: "Cancel", search: "Search...", building_detail: "Building Detail", no_buildings_title: "No Buildings Yet", no_buildings_desc: "Click \"Add Building\" to get started.", building_saved: "Building saved!", scan_qr_code: "Scan QR", tab_address: "Address & Info", tab_property: "Property Profile", tab_notes: "Photos & Notes" },
-                fa: { home_title_1: "مرکز اطلاعات ساختمان", home_subtitle: "یک ساختمان را انتخاب یا یک ساختمان جدید اضافه کنید.", add_new_building: "افزودن ساختمان", building_info: "اطلاعات ساختمان", name: "نام", zip_code: "کد پستی", address: "آدرس", area: "مساحت (مترمربع)", notes: "یادداشت", save: "ذخیره", cancel: "انصراف", search: "جستجو...", building_detail: "جزئیات ساختمان", no_buildings_title: "ساختمانی وجود ندارد", no_buildings_desc: "برای شروع، روی «افزودن ساختمان» کلیک کنید.", building_saved: "ساختمان ذخیره شد!", scan_qr_code: "اسکن QR", tab_address: "آدرس و اطلاعات", tab_property: "مشخصات ملک", tab_notes: "عکس و یادداشت" }
-            };
-
-            const initDB = () => new Promise(r => {
-                const req = indexedDB.open('BIMHub_Pro_v1', 1);
-                req.onupgradeneeded = e => e.target.result.createObjectStore('buildings', { keyPath: 'id', autoIncrement: true });
-                req.onsuccess = e => { db = e.target.result; r(); };
-            });
-
-            const showToast = (messageKey, type = 'success') => {
-                toast.textContent = translations[currentLanguage][messageKey] || messageKey;
-                toast.className = `toast ${type} show`;
-                setTimeout(() => toast.classList.remove('show'), 3000);
-            };
-
-            const switchPanel = (panelId) => {
-                Object.values(panels).forEach(p => p.classList.remove('active'));
-                if (panels[panelId]) {
-                    panels[panelId].classList.add('active');
-                    if (panelId === 'form') document.getElementById('name').focus();
+                en: {
+                    app_title: "Building Information Hub", admin_title: "Building Records", add_building_title: "Add New Building", edit_building_title: "Edit Building", scan_title: "Scan QR Code", save: "Save",
+                    scan_qr: "Scan Building QR Code", add_building: "Add New Building",
+                    no_buildings_found: "No buildings found.", click_plus_to_add: "Click the '+' button above to add one.",
+                    search_placeholder: "Search by Name or ZIP Code...", no_search_results: "No buildings match your search.", try_different_search: "Try a different search term.",
+                    form_section_address: "Address & Basic Info", form_building_name: "Building Name / Profile Name *", form_street: "Street", form_city: "City", form_state_province: "State/Province", form_zip_postal: "Zip/Postal Code", form_country: "Country/Region", form_webpage: "Web Page",
+                    form_latitude: "Latitude", form_longitude: "Longitude", form_get_location: "Get Current Location",
+                    form_section_profile: "Property Profile", form_property_type: "Property Type", form_year_built: "Year Built", form_sqm: "Square Meters (m²)", form_bedrooms: "Bedrooms", form_bathrooms: "Bathrooms", form_garage: "Garage",
+                    form_property_type_select: 'Select a classification...',
+                    form_eu_111: 'Residential - One-dwelling',
+                    form_eu_112: 'Residential - Multi-dwelling',
+                    form_eu_122: 'Commercial - Office Building',
+                    form_eu_123: 'Commercial - Wholesale and retail trade',
+                    form_eu_125: 'Commercial - Industrial and warehouse',
+                    form_eu_126: 'Public - Entertainment, education, hospital',
+                    form_eu_127: 'Other non-residential',
+                    form_section_financials: "Financials", form_loan_amount: "Loan Amount", form_assessed_value: "Assessed Value", form_current_value: "Current Value", form_down_payment: "Down Payment", form_monthly_mortgage: "Monthly Mortgage", form_housing_dues: "Housing Dues", form_tax: "Tax", form_insurance: "Insurance",
+                    form_section_photos: "Photos", form_photos_note: "Upload or take pictures of the building.", form_upload_gallery: "Upload", form_take_photo: "Take a photo", form_section_notes: "Notes",
+                    generate_qr: "Generate QR & Save", scan_instruction: "Point your camera at a QR code.", confirm_delete: "Are you sure you want to delete this building?",
+                    toast_saved: "Building saved successfully!", toast_deleted: "Building deleted.", toast_camera_fail: "Could not start camera. Please grant permission.", toast_qr_not_found: "Building not found in local data.", toast_fill_fields: "Please fill in all required fields.", toast_photo_loading: "Please wait for photos to finish loading.", toast_photo_fail: "Failed to load photo.", toast_photo_size_limit: "Photo exceeds size limit of 5MB.", toast_location_captured: "Location captured!", toast_location_fail: "Could not get location.", toast_geo_unsupported: "Geolocation is not supported by your browser.",
+                    yes: "Yes", no: "No", cancel: "Cancel",
+                    export_to_excel: "Export to Excel", export_to_pdf: "Download PDF", download_qr_image: "Download QR Image", toast_no_data_export: "No data to export.", toast_exported: "Data exported as {format} successfully!",
+                },
+                fa: {
+                    app_title: "مرکز اطلاعات ساختمان", admin_title: "لیست ساختمان‌ها", add_building_title: "افزودن ساختمان جدید", edit_building_title: "ویرایش ساختمان", scan_title: "اسکن کد QR", save: "ذخیره",
+                    scan_qr: "اسکن کد QR ساختمان", add_building: "افزودن ساختمان جدید",
+                    no_buildings_found: "هیچ ساختمانی یافت نشد.", click_plus_to_add: "برای افزودن، روی دکمه '+' بالا کلیک کنید.",
+                    search_placeholder: "جستجو بر اساس نام یا کد پستی...", no_search_results: "هیچ ساختمانی با جستجوی شما مطابقت ندارد.", try_different_search: "عبارت دیگری را امتحان کنید.",
+                    form_section_address: "آدرس و اطلاعات اولیه", form_building_name: "نام ساختمان / پروفایل *", form_street: "خیابان", form_city: "شهر", form_state_province: "استان/ایالت", form_zip_postal: "کد پستی", form_country: "کشور", form_webpage: "صفحه وب",
+                    form_latitude: "عرض جغرافیایی", form_longitude: "طول جغرافیایی", form_get_location: "دریافت موقعیت فعلی",
+                    form_section_profile: "مشخصات ملک", form_property_type: "نوع ملک", form_year_built: "سال ساخت", form_sqm: "متر مربع", form_bedrooms: "اتاق خواب", form_bathrooms: "سرویس بهداشتی", form_garage: "پارکینگ",
+                    form_property_type_select: 'یک دسته را انتخاب کنید...',
+                    form_eu_111: 'مسکونی - یک واحدی',
+                    form_eu_112: 'مسکونی - چند واحدی',
+                    form_eu_122: 'تجاری - اداری',
+                    form_eu_123: 'تجاری - عمده و خرده فروشی',
+                    form_eu_125: 'صنعتی و انبار',
+                    form_eu_126: 'عمومی - تفریحی، آموزشی، بیمارستانی',
+                    form_eu_127: 'سایر غیرمسکونی‌ها',
+                    form_section_financials: "اطلاعات مالی", form_loan_amount: "مبلغ وام", form_assessed_value: "ارزش ارزیابی شده", form_current_value: "ارزش فعلی", form_down_payment: "پیش پرداخت", form_monthly_mortgage: "قسط ماهانه", form_housing_dues: "شارژ", form_tax: "مالیات", form_insurance: "بیمه",
+                    form_section_photos: "عکس‌ها", form_photos_note: "عکس‌های ساختمان را بارگذاری یا ثبت کنید.", form_upload_gallery: "بارگذاری", form_take_photo: "گرفتن عکس", form_section_notes: "یادداشت‌ها",
+                    generate_qr: "ساختن QR و ذخیره", scan_instruction: "دوربین خود را به سمت کد QR بگیرید.", confirm_delete: "آیا از حذف این ساختمان مطمئن هستید؟",
+                    toast_saved: "ساختمان با موفقیت ذخیره شد!", toast_deleted: "ساختمان حذف شد.", toast_camera_fail: "دوربین فعال نشد. لطفاً دسترسی را مجاز کنید.", toast_qr_not_found: "ساختمان در داده‌های محلی یافت نشد.", toast_fill_fields: "لطفاً تمام فیلدهای الزامی را پر کنید.",
+                    toast_photo_loading: "لطفاً منتظر بمانید تا بارگذاری عکس‌ها تمام شود.", toast_photo_fail: "بارگذاری عکس ناموفق بود.", toast_photo_size_limit: "حجم عکس از حد مجاز ۵ مگابایت بیشتر است.",
+                    toast_location_captured: "موقعیت مکانی ثبت شد!", toast_location_fail: "دریافت موقعیت مکانی ناموفق بود.", toast_geo_unsupported: "موقعیت یابی توسط مرورگر شما پشتیبانی نمی‌شود.",
+                    yes: "بله", no: "خیر", cancel: "لغو",
+                    export_to_excel: "خروجی اکسل", export_to_pdf: "دانلود PDF", download_qr_image: "دانلود تصویر QR", toast_no_data_export: "داده‌ای برای خروج وجود ندارد.", toast_exported: "داده‌ها با موفقیت به صورت {format} خروجی گرفته شد!",
                 }
+            };
+
+            const translate = (key, params = {}, lang = state.currentLang) => { let text = (translations[lang] || translations.en)[key] || key; for(const param in params) { text = text.replace(`{${param}}`, params[param]); } return text; };
+            const dom = { pages: document.querySelectorAll('.page'), headerTitle: document.getElementById('header-title'), backButton: document.getElementById('back-button'), headerActions: document.getElementById('header-actions'), buildingList: document.getElementById('building-list'), emptyAdminState: document.getElementById('empty-admin-state'), searchBar: document.getElementById('search-bar'), form: document.getElementById('building-form'), photoUploadInput: document.getElementById('photo-upload'), photoCaptureInput: document.getElementById('photo-capture'), saveProgressBar: document.getElementById('save-progress-bar'), formSaveBtn: document.getElementById('form-save-btn'), formCancelBtn: document.getElementById('form-cancel-btn'), confirmModalOverlay: document.getElementById('confirm-modal-overlay') };
+            
+            const convertToEnglishNumerals = (str) => {
+                if (typeof str !== 'string' && typeof str !== 'number') return str;
+                return str.toString().replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
             };
             
-            const updateLanguage = () => {
-                document.body.className = currentLanguage === 'fa' ? 'persian' : 'ltr';
-                const lang = translations[currentLanguage];
-                document.querySelectorAll('[data-lang]').forEach(el => el.textContent = lang[el.dataset.lang]);
-                document.querySelectorAll('[data-lang-placeholder]').forEach(el => el.placeholder = lang[el.dataset.langPlaceholder]);
-            };
+            const unformatCurrency = (str) => {
+                if (typeof str !== 'string') return str;
+                return str.replace(/[^0-9.-]+/g,"");
+            }
 
-            const renderBuildingList = async (filter = '') => {
-                 skeletonLoader.style.display = 'block';
-                 buildingListEl.style.display = 'none';
-                 emptyState.style.display = 'none';
-
-                 const buildings = await new Promise(r => db.transaction('buildings').objectStore('buildings').getAll().onsuccess = e => r(e.target.result));
-                 
-                 skeletonLoader.style.display = 'none';
-                 buildingListEl.innerHTML = '';
-                 const lowerFilter = filter.toLowerCase();
-                 const filtered = buildings.filter(b => b.name?.toLowerCase().includes(lowerFilter) || b.zipCode?.toLowerCase().includes(lowerFilter));
+            const sanitizeBuilding = (data) => {
+                const sanitized = { id: data.id || crypto.randomUUID() };
+                const fields = [
+                    'buildingName', 'street', 'city', 'stateProvince', 'zipPostal', 'country', 'webpage', 
+                    'latitude', 'longitude', 'propertyType', 'notes'
+                ];
+                const numericFields = ['yearBuilt', 'squareFeet', 'bedrooms', 'bathrooms'];
+                const currencyFields = ['loanAmount', 'assessedValue', 'currentValue', 'downPayment', 'monthlyMortgage', 'housingDues', 'tax', 'insurance'];
                 
-                if (filtered.length === 0) {
-                    emptyState.style.display = 'block';
-                } else {
-                    buildingListEl.style.display = 'block';
-                    filtered.forEach(b => {
-                        const item = document.createElement('div');
-                        item.className = `p-3 rounded-lg cursor-pointer border-2 border-transparent transition-all ${b.id === activeBuildingId ? 'bg-[var(--bg-accent)] border-[var(--accent-primary)]' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`;
-                        item.dataset.id = b.id;
-                        item.innerHTML = `<h4 class="font-bold">${b.name}</h4><p class="text-sm text-[var(--text-secondary)]">${b.zipCode || ''}</p>`;
-                        item.addEventListener('click', () => displayBuildingDetail(b.id));
-                        buildingListEl.appendChild(item);
-                    });
-                }
-            };
-
-            const displayBuildingDetail = async (id) => {
-                const building = await new Promise(r => db.transaction('buildings').objectStore('buildings').get(id).onsuccess = e => r(e.target.result));
-                activeBuildingId = id;
-                renderBuildingList(document.getElementById('search-bar').value); // Re-render list to show active state
-                const detailEl = document.getElementById('panel-detail');
-                detailEl.innerHTML = '';
-                if(building) {
-                    const content = `
-                        <h1 class="text-3xl font-bold">${building.name}</h1>
-                        <p class="text-lg text-[var(--text-secondary)]">${building.address || ''}</p>
-                        <div class="mt-8 grid grid-cols-2 gap-6">
-                            <div><h5 class="text-sm text-[var(--text-secondary)]" data-lang="zip_code">ZIP</h5><p class="font-bold text-lg">${building.zipCode || 'N/A'}</p></div>
-                            <div><h5 class="text-sm text-[var(--text-secondary)]" data-lang="area">Area</h5><p class="font-bold text-lg">${building.area || 'N/A'} sqm</p></div>
-                        </div>
-                         <div class="mt-6"><h5 class="text-sm text-[var(--text-secondary)]" data-lang="notes">Notes</h5><p>${building.notes || 'No notes available.'}</p></div>
-                    `;
-                    detailEl.innerHTML = content;
-                }
-                switchPanel('detail');
-                updateLanguage();
-            };
-
-            const openForm = async (id = null) => {
-                buildingFormEl.reset();
-                if (id) {
-                    const building = await new Promise(r => db.transaction('buildings').objectStore('buildings').get(id).onsuccess = e => r(e.target.result));
-                    Object.keys(building).forEach(key => {
-                        const el = document.getElementById(key);
-                        if(el) el.value = building[key];
-                    });
-                }
-                validateForm();
-                switchPanel('form');
-            };
-
-            const validateForm = () => saveFormBtn.disabled = !document.getElementById('name').value.trim();
-            document.getElementById('name').addEventListener('input', validateForm);
-
-            document.getElementById('add-building-btn').addEventListener('click', () => openForm());
-            document.getElementById('cancel-form-btn').addEventListener('click', () => switchPanel('home'));
-            document.getElementById('search-bar').addEventListener('input', e => renderBuildingList(e.target.value));
-            
-            // Tab switching logic
-            buildingFormEl.querySelector('.flex.space-x-6').addEventListener('click', e => {
-                if(e.target.matches('.tab')) {
-                    const tabNum = e.target.dataset.tab;
-                    buildingFormEl.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                    e.target.classList.add('active');
-                    buildingFormEl.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
-                    buildingFormEl.querySelector(`.tab-pane[data-tab-pane="${tabNum}"]`).classList.remove('hidden');
-                }
-            });
-
-            buildingFormEl.addEventListener('submit', async e => {
-                e.preventDefault();
-                const data = Object.fromEntries(new FormData(e.target).entries());
-                const id = parseInt(document.getElementById('building-id').value);
-                if(id) data.id = id;
+                fields.forEach(f => sanitized[f] = data[f] || '');
+                numericFields.forEach(f => sanitized[f] = convertToEnglishNumerals(data[f]) || '');
+                currencyFields.forEach(f => sanitized[f] = unformatCurrency(convertToEnglishNumerals(data[f])) || '');
                 
-                const tx = db.transaction('buildings', 'readwrite');
-                const req = tx.objectStore('buildings').put(data);
-                req.onsuccess = async () => {
-                    await renderBuildingList();
-                    displayBuildingDetail(req.result);
-                    showToast('building_saved', 'success');
+                sanitized.garage = data.garage || false;
+                sanitized.photos = Array.isArray(data.photos) ? data.photos : [];
+
+                return sanitized;
+            };
+
+            const db = { getAll: () => JSON.parse(localStorage.getItem(DB_KEY) || '[]'), getById: (id) => db.getAll().find(b => String(b.id) === String(id)), save: (data) => { const all = db.getAll(); const s = sanitizeBuilding(data); const i = all.findIndex(b => String(b.id) === String(s.id)); if (i > -1) all[i] = s; else all.push(s); localStorage.setItem(DB_KEY, JSON.stringify(all)); }, delete: (id) => { let all = db.getAll(); all = all.filter(b => String(b.id) !== String(id)); localStorage.setItem(DB_KEY, JSON.stringify(all)); } };
+
+            const ui = {
+                updateText: () => {
+                    document.documentElement.lang = state.currentLang;
+                    document.documentElement.dir = state.currentLang === 'fa' ? 'rtl' : 'ltr';
+                    document.getElementById('lang-switcher').textContent = state.currentLang === 'en' ? 'FA' : 'EN';
+                    document.querySelectorAll('[data-lang]').forEach(el => { if (el.dataset.lang) el.textContent = translate(el.dataset.lang); });
+                    dom.searchBar.placeholder = translate('search_placeholder');
+                    document.getElementById('home-title').textContent = translate('app_title');
+                    const propSelect = document.getElementById('propertyType');
+                    if(propSelect) { 
+                        const val = propSelect.value; 
+                        propSelect.innerHTML = `
+                            <option value="">${translate('form_property_type_select')}</option>
+                            <option value="Residential - One-dwelling">${translate('form_eu_111')}</option>
+                            <option value="Residential - Multi-dwelling">${translate('form_eu_112')}</option>
+                            <option value="Commercial - Office Building">${translate('form_eu_122')}</option>
+                            <option value="Commercial - Wholesale and retail trade">${translate('form_eu_123')}</option>
+                            <option value="Commercial - Industrial and warehouse">${translate('form_eu_125')}</option>
+                            <option value="Public - Entertainment, education, hospital">${translate('form_eu_126')}</option>
+                            <option value="Other non-residential">${translate('form_eu_127')}</option>
+                        `; 
+                        propSelect.value = val; 
+                    }
+                },
+                renderPhotoThumbnails: () => {
+                    const container = document.getElementById('photo-thumbnails'); container.innerHTML = '';
+                    state.photoCache.forEach((src, i) => { const div = document.createElement('div'); div.className = 'thumbnail-container'; div.innerHTML = `<img src="${src}" class="w-full h-24 object-cover rounded-lg shadow-md"><div class="thumbnail-delete">&times;</div>`; div.querySelector('.thumbnail-delete').onclick = () => { state.photoCache.splice(i, 1); ui.renderPhotoThumbnails(); }; container.appendChild(div); });
+                },
+                renderAdminList: (term = '') => {
+                    let buildings = db.getAll(); const normTerm = term.toLowerCase().trim();
+                    if (normTerm) buildings = buildings.filter(b => (b.buildingName && b.buildingName.toLowerCase().includes(normTerm)) || (b.zipPostal && b.zipPostal.toLowerCase().includes(normTerm)));
+                    dom.buildingList.innerHTML = '';
+                    if (buildings.length === 0) {
+                        dom.emptyAdminState.classList.remove('hidden'); const msg1 = dom.emptyAdminState.querySelector('[data-lang="no_buildings_found"]'); const msg2 = dom.emptyAdminState.querySelector('[data-lang="click_plus_to_add"]');
+                        if (normTerm) { msg1.textContent = translate('no_search_results'); msg2.textContent = translate('try_different_search'); } else { msg1.textContent = translate('no_buildings_found'); msg2.textContent = translate('click_plus_to_add'); }
+                    } else {
+                        dom.emptyAdminState.classList.add('hidden');
+                        buildings.forEach(b => { const item = document.createElement('div'); item.className = 'bg-white p-4 rounded-md border border-gray-200 hover:border-[var(--primary-color)] hover:shadow-sm cursor-pointer flex justify-between items-center'; item.dataset.id = b.id; item.innerHTML = `<div><h3 class="font-bold text-lg">${b.buildingName}</h3><p class="text-gray-500">${b.street || 'No address'}</p></div><span class="text-gray-500">${b.zipPostal||''}</span>`; item.onclick = () => showPage('page-detail', { id: b.id }); dom.buildingList.appendChild(item); });
+                    }
+                },
+                renderDetail: (b) => {
+                    document.getElementById('detail-building-name').textContent = b.buildingName;
+                    const qrContainer = document.getElementById('detail-qr-code-container'); qrContainer.innerHTML = ''; new QRCodeStyling({ width: 180, height: 180, data: String(b.id), dotsOptions: { color: '#03396c', type: 'rounded' } }).append(qrContainer);
+                    const content = document.getElementById('detail-content'); content.innerHTML = '';
+                    const createField = (lbl, val) => val || val === 0 || val === false ? `<div class="flex justify-between items-center py-2 border-b"><p class="text-sm font-medium text-gray-500">${translate(lbl)}</p><p class="text-sm text-right break-all">${val===true?translate('yes'):val===false?translate('no'):val}</p></div>` : '';
+                    const createLink = (lbl, val, url) => val ? `<div class="flex justify-between items-center py-2 border-b"><p class="text-sm font-medium text-gray-500">${translate(lbl)}</p><a href="${url}" target="_blank" class="text-sm text-blue-600 hover:underline text-right break-all">${val}</a></div>` : '';
+                    const fC = (n) => !isNaN(n)&&n!==''&&n!==null ? new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(n)) : '';
+                    let addr = [b.street,b.city,b.stateProvince,b.zipPostal,b.country].filter(Boolean).join(', '); let addrHTML = createField('form_street', addr) + createLink('form_webpage',b.webpage,b.webpage); if(b.latitude&&b.longitude) addrHTML+=createLink('form_section_location',`${b.latitude}, ${b.longitude}`,`https://www.google.com/maps?q=${b.latitude},${b.longitude}`); if(addrHTML) content.innerHTML+=`<div class="section-container"><h3 class="font-bold text-lg mb-2">${translate('form_section_address')}</h3>${addrHTML}</div>`;
+                    let profHTML = createField('form_property_type',b.propertyType)+createField('form_year_built',b.yearBuilt)+createField('form_sqm',b.squareFeet)+createField('form_bedrooms',b.bedrooms)+createField('form_bathrooms',b.bathrooms)+createField('form_garage',b.garage); if(profHTML) content.innerHTML+=`<div class="section-container"><h3 class="font-bold text-lg mb-2">${translate('form_section_profile')}</h3>${profHTML}</div>`;
+                    let finHTML = createField('form_loan_amount',fC(b.loanAmount))+createField('form_assessed_value',fC(b.assessedValue))+createField('form_current_value',fC(b.currentValue))+createField('form_down_payment',fC(b.downPayment))+createField('form_monthly_mortgage',fC(b.monthlyMortgage))+createField('form_housing_dues',fC(b.housingDues))+createField('form_tax',fC(b.tax))+createField('form_insurance',fC(b.insurance)); if(finHTML) content.innerHTML+=`<div class="section-container"><h3 class="font-bold text-lg mb-2">${translate('form_section_financials')}</h3>${finHTML}</div>`;
+                    let exHTML = ''; if(b.notes) exHTML+=`<div class="mb-6"><h3 class="font-bold text-lg mb-2">${translate('form_section_notes')}</h3><p class="text-gray-700 whitespace-pre-wrap text-sm">${b.notes}</p></div>`; if(b.photos&&b.photos.length>0) exHTML+=`<div><h3 class="font-bold text-lg mb-4">${translate('form_section_photos')}</h3><div class="grid grid-cols-2 sm:grid-cols-3 gap-4">${b.photos.map(src=>`<img src="${src}" class="rounded-lg w-full h-auto object-cover">`).join('')}</div></div>`; if(exHTML) content.innerHTML+=`<div class="section-container">${exHTML}</div>`;
+                },
+                showToast: (key, isErr = false, params = {}) => {
+                    const toast = document.getElementById('toast'); toast.querySelector('p').textContent = translate(key, params);
+                    toast.className = `fixed bottom-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg transition-transform duration-300 ${isErr?'bg-red-600':'bg-gray-800'}`;
+                    requestAnimationFrame(()=>{toast.style.opacity='1';toast.style.transform='translateY(0)';}); setTimeout(()=>{toast.style.opacity='0';toast.style.transform='translateY(5rem)';}, 3000);
+                },
+                showConfirmModal: (key, cb) => {
+                    document.getElementById('confirm-modal-message').textContent = translate(key);
+                    document.getElementById('confirm-modal-yes').textContent = translate('yes');
+                    document.getElementById('confirm-modal-no').textContent = translate('no');
+                    dom.confirmModalOverlay.classList.add('visible'); state.confirmCallback = cb;
+                },
+                hideConfirmModal: () => { dom.confirmModalOverlay.classList.remove('visible'); state.confirmCallback = null; }
+            };
+
+            const showPage = (pageId, params = {}, isGoingBack = false) => {
+                window.scrollTo(0,0);
+                if (state.activeScanner) { state.activeScanner.stop().catch(()=>{}); state.activeScanner = null; }
+                if (!isGoingBack && state.currentPage !== pageId) { state.history.push({page: state.currentPage, id: dom.form.id.value}); }
+                state.currentPage = pageId; dom.pages.forEach(p=>p.classList.remove('active')); document.getElementById(pageId).classList.add('active');
+                dom.backButton.classList.toggle('hidden', state.history.length === 0); dom.headerActions.innerHTML = '';
+                let titleKey = 'app_title';
+                switch(pageId) {
+                    case 'page-admin': titleKey='admin_title'; dom.headerActions.innerHTML=`<button id="add-btn" class="p-2 rounded-full text-white hover:bg-black/20"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg></button><button id="scan-btn" class="p-2 rounded-full text-white hover:bg-black/20"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2m8-12h2a2 2 0 012 2v2m-4 8h2a2 2 0 002-2v-2M7 12h10"></path></svg></button>`; document.getElementById('add-btn').onclick=()=>showPage('page-form'); document.getElementById('scan-btn').onclick=()=>showPage('page-scanner'); dom.searchBar.value=''; ui.renderAdminList(); break;
+                    case 'page-form': state.isNewFormEntry=!params.id; titleKey=state.isNewFormEntry?'add_building_title':'edit_building_title'; break;
+                    case 'page-detail': const b=db.getById(params.id); if(b) { dom.headerTitle.textContent=b.buildingName; dom.headerActions.innerHTML=`<button id="edit-btn" class="p-2 rounded-full text-white hover:bg-black/20"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536L16.732 3.732z"></path></svg></button><button id="del-btn" class="p-2 rounded-full text-white hover:bg-red-500/50"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>`; document.getElementById('edit-btn').onclick=()=>showPage('page-form',{id:b.id}); document.getElementById('del-btn').onclick=()=>handleDelete(b.id); } break;
+                    case 'page-scanner': titleKey='scan_title'; break;
+                }
+                if (pageId !== 'page-detail') dom.headerTitle.textContent = translate(titleKey);
+                if (pageId === 'page-form') {
+                    dom.form.reset(); state.photoCache = []; dom.form.bedrooms.value='0'; dom.form.bathrooms.value='0';
+                    if (params.id) { const b = db.getById(params.id); if (b) { for (const key in b) { const el = document.getElementById(key); if (el) { if (el.type === 'checkbox') el.checked = b[key]; else el.value = b[key]; } } state.photoCache = [...(b.photos||[])]; } } else { dom.form.id.value = crypto.randomUUID(); }
+                    ui.renderPhotoThumbnails();
+                } else if (pageId === 'page-detail') {
+                    const b = db.getById(params.id); if (b) { ui.renderDetail(b); document.getElementById('detail-download-qr-btn').onclick=()=>downloadQrAsImage(b); document.getElementById('detail-export-excel-btn').onclick=()=>handleExport('xlsx',[b]); document.getElementById('detail-export-pdf-btn').onclick=()=>pdf.generate(b); } else { ui.showToast('toast_qr_not_found',true); goBack(); }
+                } else if (pageId === 'page-scanner') { startScanner(); }
+            };
+
+            const goBack = () => { if (state.history.length > 0) { const prev = state.history.pop(); showPage(prev.page, {id: prev.id}, true); } };
+            const handleDelete = (id) => ui.showConfirmModal('confirm_delete', () => { db.delete(id); ui.showToast('toast_deleted'); showPage('page-admin'); });
+
+            const handleFormSave = () => {
+                if (state.photosLoading > 0) { ui.showToast('toast_photo_loading', true); return; }
+                if (!dom.form.checkValidity()) { ui.showToast('toast_fill_fields', true); dom.form.reportValidity(); return; }
+                dom.saveProgressBar.style.width='100%';
+                const data={}; const inputs=dom.form.querySelectorAll('input,select,textarea');
+                inputs.forEach(i=>{if(i.id)data[i.id]=i.type==='checkbox'?i.checked:i.value;});
+                data.photos=state.photoCache; db.save(data); ui.showToast('toast_saved');
+                setTimeout(() => { showPage('page-detail', {id:data.id}); dom.saveProgressBar.style.width='0%'; }, 500);
+            };
+
+            const startScanner = () => {
+                state.activeScanner = new Html5Qrcode("qr-reader");
+                const onScanSuccess = (decodedText) => {
+                    if (state.activeScanner) { state.activeScanner.stop().then(() => { const b = db.getById(decodedText); if (b) { state.history.push({page:'page-admin'}); showPage('page-detail', { id: b.id }); } else { ui.showToast('toast_qr_not_found', true); goBack(); } }).catch(()=>{}); state.activeScanner = null; }
                 };
+                state.activeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, onScanSuccess).catch(() => { ui.showToast("toast_camera_fail", true); goBack(); });
+            };
+
+            const handlePhotoFiles = (files, inputEl) => {
+                if(!files||files.length===0){if(inputEl)inputEl.value=null;return;}
+                const MAX_SIZE=5*1024*1024;
+                Array.from(files).forEach(file=>{ if(file.size>MAX_SIZE){ui.showToast('toast_photo_size_limit',true);return;}
+                    state.photosLoading++; dom.formSaveBtn.disabled=true; dom.formSaveBtn.classList.add('opacity-50');
+                    const reader=new FileReader();
+                    const done=()=>{state.photosLoading--;if(state.photosLoading===0){dom.formSaveBtn.disabled=false;dom.formSaveBtn.classList.remove('opacity-50');}};
+                    reader.onload=(e)=>{state.photoCache.push(e.target.result);ui.renderPhotoThumbnails();done();};
+                    reader.onerror=()=>{ui.showToast('toast_photo_fail',true);done();};
+                    reader.readAsDataURL(file);
+                });
+                if(inputEl)inputEl.value=null;
+            };
+
+            const handleExport = (format, data) => {
+                const buildings = data || db.getAll(); if (buildings.length === 0) { ui.showToast("toast_no_data_export", true); return; }
+                const clean = buildings.map(b => { const { photos, ...rest } = sanitizeBuilding(b); return rest; });
+                if (format === 'xlsx') { const ws = XLSX.utils.json_to_sheet(clean); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Buildings"); XLSX.writeFile(wb, "Building_Export.xlsx"); }
+                ui.showToast('toast_exported', false, {format: format.toUpperCase()});
+            };
+
+            const getLines = (ctx, text, maxWidth) => {
+                if (!text) return [];
+                const words = text.split(' ');
+                let lines = [];
+                let currentLine = words[0] || '';
+                for (let i = 1; i < words.length; i++) {
+                    let word = words[i];
+                    let width = ctx.measureText(currentLine + ' ' + word).width;
+                    if (width < maxWidth) {
+                        currentLine += ' ' + word;
+                    } else {
+                        lines.push(currentLine);
+                        currentLine = word;
+                    }
+                }
+                lines.push(currentLine);
+                return lines;
+            }
+
+            const downloadQrAsImage = async (building) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const width = 400;
+                const padding = 20;
+                const qrSize = 150;
+
+                const name = building.buildingName || '';
+                const address = [building.street, building.city, building.stateProvince, building.zipPostal, building.country].filter(Boolean).join(', ');
+                
+                ctx.font = 'bold 24px Ubuntu';
+                const nameLines = getLines(ctx, name, width - padding * 2);
+                ctx.font = '16px Ubuntu';
+                const addressLines = getLines(ctx, address, width - padding * 2);
+
+                const height = (padding * 2) + (nameLines.length * 28) + 10 + (addressLines.length * 20) + 20 + qrSize;
+                canvas.width = width;
+                canvas.height = height;
+
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, width, height);
+
+                ctx.fillStyle = '#03396c';
+                ctx.font = 'bold 24px Ubuntu';
+                let y = padding + 24;
+                nameLines.forEach(line => {
+                    ctx.fillText(line, padding, y);
+                    y += 28;
+                });
+
+                y += 10;
+                ctx.fillStyle = '#37352F';
+                ctx.font = '16px Ubuntu';
+                addressLines.forEach(line => {
+                    ctx.fillText(line, padding, y);
+                    y += 20;
+                });
+
+                y += 20;
+                const qrInstance = new QRCodeStyling({ width: qrSize, height: qrSize, data: String(building.id), dotsOptions: { color: '#03396c' } });
+                const qrBlob = await qrInstance.getRawData('png');
+                const qrImage = await createImageBitmap(qrBlob);
+                
+                ctx.drawImage(qrImage, (width - qrSize) / 2, y);
+
+                const link = document.createElement('a');
+                link.download = `QR-${building.buildingName.replace(/\s/g, '_')}.png`;
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+            };
+
+            const pdf = {
+                generate: (b) => {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    const FONT = "Helvetica"; // Using a standard font for reliability
+                    doc.setFont(FONT);
+
+                    const margin = 15;
+                    const pageW = doc.internal.pageSize.getWidth();
+                    let y = 0; 
+                    
+                    const qrInstance = new QRCodeStyling({ width: 300, height: 300, data: String(b.id) });
+                    qrInstance.getRawData('png').then(blob => {
+                         const reader = new FileReader();
+                         reader.readAsDataURL(blob);
+                         reader.onloadend = function() {
+                             const base64data = reader.result;          
+                             const qrWidth = 40;
+                             const qrHeight = 40;
+                             const qrX = pageW - margin - qrWidth;
+                             const qrY = margin;
+                             doc.addImage(base64data, 'PNG', qrX, qrY, qrWidth, qrHeight);
+
+                             doc.setFontSize(22);
+                             doc.setFont(FONT, 'bold');
+                             doc.setTextColor('#03396c');
+                             const titleMaxWidth = pageW - margin * 2 - qrWidth - 5;
+                             const titleLines = doc.splitTextToSize(b.buildingName, titleMaxWidth);
+                             doc.text(titleLines, margin, qrY + 5);
+                             
+                             y = qrY + qrHeight + 15;
+
+                             const addSection = (title, data) => {
+                                 if (y > 260) { doc.addPage(); y = 20; }
+                                 doc.setFontSize(16);
+                                 doc.setFont(FONT, 'bold');
+                                 doc.setTextColor('#03396c');
+                                 doc.text(title, margin, y);
+                                 y += 3;
+                                 doc.setDrawColor(234, 234, 234);
+                                 doc.line(margin, y, pageW - margin, y);
+                                 y += 7;
+                                 
+                                 const tableBody = data.filter(i => i.value).map(i => [i.label, i.value]);
+                                 if (tableBody.length > 0) {
+                                     doc.autoTable({
+                                         startY: y,
+                                         body: tableBody,
+                                         theme: 'plain',
+                                         styles: { font: FONT, fontStyle: 'normal', fontSize: 10, cellPadding: 2 },
+                                         columnStyles: { 0: { fontStyle: 'bold', textColor: '#37352F' } }
+                                     });
+                                     y = doc.autoTable.previous.finalY + 10;
+                                 } else {
+                                      y += 5; // Add space even if section is empty
+                                 }
+                             };
+
+                             const fC = (n) => !isNaN(n)&&n!==''&&n!==null?new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(n)):'';
+                             
+                             addSection(translate('form_section_address',{},'en'), [
+                                 {label: translate('form_street',{},'en'), value: [b.street,b.city,b.stateProvince,b.zipPostal,b.country].filter(Boolean).join(', ')},
+                                 {label: translate('form_webpage',{},'en'), value: b.webpage},
+                                 {label: "Location", value: (b.latitude && b.longitude) ? `${b.latitude}, ${b.longitude}` : ''},
+                             ]);
+                             addSection(translate('form_section_profile',{},'en'), [
+                                 {label: translate('form_property_type',{},'en'), value: b.propertyType},
+                                 {label: translate('form_year_built',{},'en'), value: b.yearBuilt},
+                                 {label: translate('form_sqm',{},'en'), value: b.squareFeet},
+                                 {label: translate('form_bedrooms',{},'en'), value: b.bedrooms},
+                                 {label: translate('form_bathrooms',{},'en'), value: b.bathrooms},
+                                 {label: translate('form_garage',{},'en'), value: b.garage ? translate('yes',{},'en') : translate('no',{},'en')},
+                             ]);
+                             addSection(translate('form_section_financials',{},'en'), [
+                                 {label: translate('form_loan_amount',{},'en'), value: fC(b.loanAmount)},
+                                 {label: translate('form_assessed_value',{},'en'), value: fC(b.assessedValue)},
+                                 {label: translate('form_current_value',{},'en'), value: fC(b.currentValue)},
+                                 {label: translate('form_down_payment',{},'en'), value: fC(b.downPayment)},
+                                 {label: translate('form_monthly_mortgage',{},'en'), value: fC(b.monthlyMortgage)},
+                                 {label: translate('form_housing_dues',{},'en'), value: fC(b.housingDues)},
+                                 {label: translate('form_tax',{},'en'), value: fC(b.tax)},
+                                 {label: translate('form_insurance',{},'en'), value: fC(b.insurance)},
+                             ]);
+                             if(b.notes){
+                                 if (y > 260) { doc.addPage(); y = 20; }
+                                 doc.setFontSize(16);
+                                 doc.setFont(FONT, 'bold');
+                                 doc.text(translate('form_section_notes',{},'en'), margin, y);
+                                 y += 7;
+                                 doc.setFont(FONT, 'normal');
+                                 doc.setFontSize(10);
+                                 doc.text(b.notes, margin, y, { maxWidth: pageW - margin * 2 });
+                             }
+                             doc.save(`Building-${b.buildingName.replace(/\s/g,'_')}.pdf`);
+                         }
+                     });
+                }
+            };
+
+            // EVENT LISTENERS
+            dom.backButton.addEventListener('click', goBack);
+            document.querySelectorAll('.nav-button[data-target]').forEach(btn => btn.addEventListener('click', (e) => showPage(e.currentTarget.dataset.target)));
+            dom.photoUploadInput.addEventListener('change', (e) => handlePhotoFiles(e.target.files, e.target));
+            dom.photoCaptureInput.addEventListener('change', (e) => handlePhotoFiles(e.target.files, e.target));
+            document.getElementById('lang-switcher').addEventListener('click', () => { state.currentLang = state.currentLang === 'en' ? 'fa' : 'en'; localStorage.setItem(LANG_KEY, state.currentLang); ui.updateText(); const currentId = dom.form.id.value; showPage(state.currentPage, {id:currentId}, true); });
+            dom.searchBar.addEventListener('input', (e) => { if (state.currentPage === 'page-admin') ui.renderAdminList(e.target.value); });
+            dom.formSaveBtn.addEventListener('click', handleFormSave);
+            dom.formCancelBtn.addEventListener('click', goBack);
+            document.getElementById('get-location-btn').addEventListener('click', () => { if ('geolocation' in navigator) navigator.geolocation.getCurrentPosition(p => { document.getElementById('latitude').value = p.coords.latitude.toFixed(6); document.getElementById('longitude').value = p.coords.longitude.toFixed(6); ui.showToast('toast_location_captured'); }, () => ui.showToast('toast_location_fail', true)); else ui.showToast('toast_geo_unsupported', true); });
+            document.getElementById('confirm-modal-no').addEventListener('click', ui.hideConfirmModal);
+            document.getElementById('confirm-modal-yes').addEventListener('click', () => { if (typeof state.confirmCallback === 'function') state.confirmCallback(); ui.hideConfirmModal(); });
+            dom.confirmModalOverlay.addEventListener('click', (e) => { if (e.target === dom.confirmModalOverlay) ui.hideConfirmModal(); });
+            
+            // Stepper buttons
+            dom.form.addEventListener('click', (e) => {
+                if (e.target.matches('.stepper-btn')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const targetInput = document.getElementById(e.target.dataset.target);
+                    if (targetInput) {
+                        let value = parseInt(convertToEnglishNumerals(targetInput.value), 10) || 0;
+                        if (e.target.matches('.stepper-plus')) {
+                            value++;
+                        } else if (e.target.matches('.stepper-minus') && value > 0) {
+                            value--;
+                        }
+                        targetInput.value = value;
+                    }
+                }
             });
             
-            await initDB();
-            await renderBuildingList();
-            updateLanguage();
-        })();
-    </script>
+            // Currency formatting
+            dom.form.addEventListener('input', (e) => {
+                if(e.target.matches('.currency')) {
+                    const value = e.target.value;
+                    const number = unformatCurrency(value);
+                    if (number) {
+                       e.target.value = new Intl.NumberFormat().format(number);
+                    }
+                }
+            });
 
+
+            // INITIALIZATION
+            ui.updateText();
+            showPage('page-home');
+        });
+    </script>
 </body>
 </html>
