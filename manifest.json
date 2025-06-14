@@ -1,0 +1,21 @@
+{
+  "name": "Building Information Hub",
+  "short_name": "BIM Hub",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2c3e50",
+  "description": "An app to store and manage building information offline.",
+  "icons": [
+    {
+      "src": "https://placehold.co/192x192/2c3e50/ffffff?text=BIM",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://placehold.co/512x512/2c3e50/ffffff?text=BIM",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
